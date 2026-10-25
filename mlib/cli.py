@@ -55,11 +55,12 @@ def main(ctx: typer.Context,
 def catalog(ctx: typer.Context,
             root: Path = typer.Argument(..., file_okay=False,
                                         help="Folder to scan (collection, staging, any music root; with --host: remote path)"),
+            host: str = typer.Option(None, "--host", help="Run against files on this machine over ssh (same as the global --host; may be given either way)"),
             out: Path = typer.Option(None, "--out", help="Plan path (default <root>/mlib_plan.json)"),
             force: bool = typer.Option(False, "--force", help="Overwrite an existing plan (previous saved as .bak); pending edits are carried over via merge"),
             open_ed: bool = typer.Option(False, "--open", help="Open the editor straight after cataloging (serves until Ctrl+C)")):
     """Scan a root and produce the edit plan (mlib_plan.json)."""
-    h = (ctx.obj or {}).get("host")
+    h = host or (ctx.obj or {}).get("host")
     if h:
         remote_mod.sync_source(h)          # keep ~/mlib_src fresh (fast, idempotent)
         plan_str, _ = remote_mod.remote_catalog(h, str(root),
@@ -129,7 +130,8 @@ def apply(ctx: typer.Context,
           write: bool = typer.Option(False, "--write", help="Execute the changes (default: preview only)"),
           album: list[str] = typer.Option(None, "--album", help="Restrict to album path(s) — repeatable"),
           keep_going: bool = typer.Option(False, "--keep-going", help="Continue on album errors instead of stopping"),
-          bitrate: str = typer.Option("320k", "--bitrate", help="mp3 bitrate for conversions (default 320k CBR)")):
+          bitrate: str = typer.Option("320k", "--bitrate", help="mp3 bitrate for conversions (default 320k CBR)"),
+          host: str = typer.Option(None, "--host", help="Run against files on this machine over ssh (same as the global --host; may be given either way)")):
     """Converge files toward the plan: convert, tag, cover, rename, clean.
 
     Preview by default — pass --write to actually change files.
@@ -139,7 +141,7 @@ def apply(ctx: typer.Context,
     results travel back)."""
     plan_path = _resolve_plan(target)
     plan = model.load_plan(plan_path)
-    h = (ctx.obj or {}).get("host")
+    h = host or (ctx.obj or {}).get("host")
     only = set(album) if album else None
 
     if h:
@@ -249,13 +251,14 @@ def convert(ctx: typer.Context,
             root: Path = typer.Argument(..., help="Folder to convert in place (with --host: remote path)"),
             bitrate: str = typer.Option("320k", "--bitrate", help="mp3 bitrate (default 320k CBR)"),
             dry_run: bool = typer.Option(False, "--dry-run", help="List what would convert"),
-            remove_originals: bool = typer.Option(False, "--remove-originals", help="DELETE each source after verified conversion (off by default — originals always stay)")):
+            remove_originals: bool = typer.Option(False, "--remove-originals", help="DELETE each source after verified conversion (off by default — originals always stay)"),
+            host: str = typer.Option(None, "--host", help="Run against files on this machine over ssh (same as the global --host; may be given either way)")):
     """Standalone lossless→mp3 conversion, no plan needed.
 
     flac/opus/ogg/webm → mp3 320 CBR in the same folder, tags carried, cover.jpg
     materialized when a folder has none but its sources carry art. Run the
     catalog loop afterwards to validate/fix tags."""
-    h = (ctx.obj or {}).get("host")
+    h = host or (ctx.obj or {}).get("host")
     if h:
         out_text = remote_mod.remote_convert(h, str(root), bitrate,
                                              remove_originals, dry_run=dry_run)
@@ -287,7 +290,7 @@ def shelf(ctx: typer.Context,
     """Apply pending work, then move the plan's album folders into a collection root."""
     plan_path = _resolve_plan(target)
     plan = model.load_plan(plan_path)
-    h = (ctx.obj or {}).get("host")
+    h = host or (ctx.obj or {}).get("host")
     only = set(album) if album else None
     if h:
         out_text = remote_mod.remote_shelf(h, plan_path, str(into),
