@@ -182,7 +182,7 @@
           "Billie Holiday & Lester Young",
           "Billie Holiday acc. by Eddie Heywood and His Orchestra"
         ],
-        "new": null,
+        "new": "Billie Holiday & Lester Young",
         "mixed": true
       },
       "albumartist": {
@@ -231,7 +231,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "01 He Ain’t Got Rhythm.mp3"
         },
@@ -249,7 +249,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "01 My First Impression of You.mp3"
         },
@@ -267,7 +267,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "01 The Man I Love.mp3"
         },
@@ -285,7 +285,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "02 This Year’s Kisses.mp3"
         },
@@ -303,7 +303,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "02 My First Impression of You (prise master).mp3"
         },
@@ -321,7 +321,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "02 You’re Just a No‐Account.mp3"
         },
@@ -339,7 +339,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "03 Why Was I Born_.mp3"
         },
@@ -357,7 +357,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "03 When You’re Smiling (prise master).mp3"
         },
@@ -375,7 +375,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "03 You’re a Lucky Guy.mp3"
         },
@@ -393,14 +393,14 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "04 I Must Have That Man.mp3"
         },
         {
           "file": "26 - When You're Smiling.flac",
           "ext": ".flac",
-          "dur": 181.0,
+          "dur": 181,
           "title": {
             "current": "When You’re Smiling",
             "new": null
@@ -411,14 +411,14 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "04 When You’re Smiling.mp3"
         },
         {
           "file": "48 - I'm Pulling Through (Lester's Solo).flac",
           "ext": ".flac",
-          "dur": 190.0,
+          "dur": 190,
           "title": {
             "current": "I’m Pulling Through",
             "new": null
@@ -429,7 +429,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "04 I’m Pulling Through.mp3"
         },
@@ -447,7 +447,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "05 Sun Showers.mp3"
         },
@@ -465,7 +465,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "05 I Can’t Believe That You’re in Love With Me.mp3"
         },
@@ -483,7 +483,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "05 Laughing at Life (prise master).mp3"
         },
@@ -501,7 +501,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "06 Yours and Mine.mp3"
         },
@@ -519,7 +519,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "06 I Can’t Believe That You’re in Love With Me (prise master).mp3"
         },
@@ -537,7 +537,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "06 Laughing at Life.mp3"
         },
@@ -555,7 +555,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "07 Mean to Me (prise master).mp3"
         },
@@ -573,7 +573,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "07 If Dreams Come True (prise master).mp3"
         },
@@ -591,7 +591,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "07 Time on My Hands.mp3"
         },
@@ -609,7 +609,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "08 Mean to Me.mp3"
         },
@@ -627,7 +627,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "08 If Dreams Come True.mp3"
         },
@@ -645,7 +645,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "08 The Man I Love.mp3"
         },
@@ -663,7 +663,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "09 Foolin’ Myself.mp3"
         },
@@ -681,7 +681,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "09 Now They Call It Swing.mp3"
         },
@@ -699,7 +699,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "09 Let’s Do It (prise master).mp3"
         },
@@ -717,7 +717,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "10 Easy Living.mp3"
         },
@@ -735,7 +735,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "10 Now They Call It Swing (prise master).mp3"
         },
@@ -753,7 +753,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "10 Let’s Do It.mp3"
         },
@@ -771,14 +771,14 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "11 I’ll Never Be the Same.mp3"
         },
         {
           "file": "33 - Back In Your Own Backyard (Price Master).flac",
           "ext": ".flac",
-          "dur": 161.0,
+          "dur": 161,
           "title": {
             "current": "Back in Your Own Backyard (prise master)",
             "new": null
@@ -789,7 +789,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "11 Back in Your Own Backyard (prise master).mp3"
         },
@@ -807,14 +807,14 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "11 All of Me (prise master).mp3"
         },
         {
           "file": "12 - Me, Myself And I.flac",
           "ext": ".flac",
-          "dur": 155.0,
+          "dur": 155,
           "title": {
             "current": "Me, Myself and I",
             "new": null
@@ -825,7 +825,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "12 Me, Myself and I.mp3"
         },
@@ -843,7 +843,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "12 Back in Your Own Backyard.mp3"
         },
@@ -861,7 +861,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "12 All of Me.mp3"
         },
@@ -879,7 +879,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "13 Me, Myself and I (prise master).mp3"
         },
@@ -897,7 +897,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "13 When a Woman Loves a Man.mp3"
         },
@@ -915,7 +915,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "13 All of Me.mp3"
         },
@@ -933,7 +933,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "14 A Sailboat in the Moonlight.mp3"
         },
@@ -951,7 +951,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "14 The Very Thought of You.mp3"
         },
@@ -969,7 +969,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "14 I Cried for You.mp3"
         },
@@ -987,7 +987,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "15 Born to Love.mp3"
         },
@@ -1005,7 +1005,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "15 I Can’t Get Started (prise master).mp3"
         },
@@ -1023,14 +1023,14 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "15 Fine and Mellow.mp3"
         },
         {
           "file": "16 - Without Your Love (Price Master).flac",
           "ext": ".flac",
-          "dur": 172.0,
+          "dur": 172,
           "title": {
             "current": "Without Your Love (prise master)",
             "new": null
@@ -1041,7 +1041,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "16 Without Your Love (prise master).mp3"
         },
@@ -1059,7 +1059,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "16 I Can’t Get Started.mp3"
         },
@@ -1077,14 +1077,14 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "16 He’s Funny That Way.mp3"
         },
         {
           "file": "17 - Without Your Love.flac",
           "ext": ".flac",
-          "dur": 173.0,
+          "dur": 173,
           "title": {
             "current": "Without Your Love",
             "new": null
@@ -1095,7 +1095,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "17 Without Your Love.mp3"
         },
@@ -1113,7 +1113,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "17 I’ve Got a Date With a Dream.mp3"
         },
@@ -1131,7 +1131,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "17 The Man I Love.mp3"
         },
@@ -1149,7 +1149,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "18 Getting Some Fun Out of Life.mp3"
         },
@@ -1167,14 +1167,14 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "18 I’ve Got a Date With a Dream (prise master).mp3"
         },
         {
           "file": "62 - Gee Baby Ain't I Good To You (Lester's obbligato).flac",
           "ext": ".flac",
-          "dur": 140.0,
+          "dur": 140,
           "title": {
             "current": "Gee Baby, Ain’t I Good to You?",
             "new": null
@@ -1185,7 +1185,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "18 Gee Baby, Ain’t I Good to You_.mp3"
         },
@@ -1203,7 +1203,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "19 Who Wants Love_.mp3"
         },
@@ -1221,14 +1221,14 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "19 You Can’t Be Mine.mp3"
         },
         {
           "file": "63 - All Of Me (Lester's obbligato).flac",
           "ext": ".flac",
-          "dur": 116.0,
+          "dur": 116,
           "title": {
             "current": "All of Me",
             "new": null
@@ -1239,7 +1239,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "19 All of Me.mp3"
         },
@@ -1257,7 +1257,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "20 Trav’lin’ All Alone.mp3"
         },
@@ -1275,7 +1275,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "20 Everybody’s Laughing.mp3"
         },
@@ -1293,7 +1293,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "20 Billie’s Blues (I Love my Man).mp3"
         },
@@ -1311,7 +1311,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "21 He’s Funny That Way.mp3"
         },
@@ -1329,7 +1329,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "21 Here It Is To‐morrow Again.mp3"
         },
@@ -1347,7 +1347,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "22 I Can’t Get Started.mp3"
         },
@@ -1365,7 +1365,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "22 Say It With a Kiss.mp3"
         }
@@ -1720,7 +1720,7 @@
         {
           "file": "The Allman Brothers Band_Idlewild South_01-11_Dreams (live at Ludlow Garage, 1970).flac",
           "ext": ".flac",
-          "dur": 629.0,
+          "dur": 629,
           "title": {
             "current": "Dreams (live at Ludlow Garage, 1970)",
             "new": null
@@ -1792,7 +1792,7 @@
         {
           "file": "The Allman Brothers Band_Idlewild South_01-15_Every Hungry Woman (live at Ludlow Garage, 1970).flac",
           "ext": ".flac",
-          "dur": 258.0,
+          "dur": 258,
           "title": {
             "current": "Every Hungry Woman (live at Ludlow Garage, 1970)",
             "new": null
@@ -2129,7 +2129,7 @@
         {
           "file": "01 Lust for Life.flac",
           "ext": ".flac",
-          "dur": 314.0,
+          "dur": 314,
           "title": {
             "current": "Lust for Life",
             "new": null
@@ -2331,7 +2331,7 @@
         {
           "file": "01 - She's Fresh.flac",
           "ext": ".flac",
-          "dur": 297.0,
+          "dur": 297,
           "title": {
             "current": "She's Fresh",
             "new": null
@@ -2532,7 +2532,7 @@
         {
           "file": "02. Heaven (Live)  (2023 Remaster).flac",
           "ext": ".flac",
-          "dur": 221.0,
+          "dur": 221,
           "title": {
             "current": "Heaven (Live)  (2023 Remaster)",
             "new": null
@@ -2622,7 +2622,7 @@
         {
           "file": "07. Burning Down the House (Live)  (2023 Remaster).flac",
           "ext": ".flac",
-          "dur": 246.0,
+          "dur": 246,
           "title": {
             "current": "Burning Down the House (Live)  (2023 Remaster)",
             "new": null
@@ -2802,7 +2802,7 @@
         {
           "file": "17. Take Me to the River (Live)  (2023 Remaster).flac",
           "ext": ".flac",
-          "dur": 333.0,
+          "dur": 333,
           "title": {
             "current": "Take Me to the River (Live)  (2023 Remaster)",
             "new": null
@@ -2820,7 +2820,7 @@
         {
           "file": "18. Crosseyed and Painless (Live)  (2023 Remaster).flac",
           "ext": ".flac",
-          "dur": 371.0,
+          "dur": 371,
           "title": {
             "current": "Crosseyed and Painless (Live)  (2023 Remaster)",
             "new": null
@@ -2972,7 +2972,7 @@
         {
           "file": "06 - Refuge (Acoustic Vers., Bonus).mp3",
           "ext": ".mp3",
-          "dur": 215.0,
+          "dur": 215,
           "title": {
             "current": "Refuge (Acoustic Vers. Bonus)",
             "new": null
@@ -3136,7 +3136,7 @@
         {
           "file": "07 - The Prettiest Star.flac",
           "ext": ".flac",
-          "dur": 211.0,
+          "dur": 211,
           "title": {
             "current": "The Prettiest Star",
             "new": null
@@ -3718,7 +3718,7 @@
         {
           "file": "04 - Life on Mars.flac",
           "ext": ".flac",
-          "dur": 234.0,
+          "dur": 234,
           "title": {
             "current": "Life on Mars?",
             "new": null
@@ -3826,7 +3826,7 @@
         {
           "file": "10 - Queen Bitch.flac",
           "ext": ".flac",
-          "dur": 199.0,
+          "dur": 199,
           "title": {
             "current": "Queen Bitch",
             "new": null
@@ -3844,7 +3844,7 @@
         {
           "file": "11 - The Bewlay Brothers.flac",
           "ext": ".flac",
-          "dur": 322.0,
+          "dur": 322,
           "title": {
             "current": "The Bewlay Brothers",
             "new": null
@@ -4452,7 +4452,7 @@
         {
           "file": "04 - TVC 15.flac",
           "ext": ".flac",
-          "dur": 334.0,
+          "dur": 334,
           "title": {
             "current": "TVC 15",
             "new": null
@@ -4893,7 +4893,7 @@
         {
           "file": "08 - I'd Rather Be High.flac",
           "ext": ".flac",
-          "dur": 225.0,
+          "dur": 225,
           "title": {
             "current": "I'd Rather Be High",
             "new": null
@@ -5019,7 +5019,7 @@
         {
           "file": "15 - So She.flac",
           "ext": ".flac",
-          "dur": 151.0,
+          "dur": 151,
           "title": {
             "current": "So She",
             "new": null
@@ -5055,7 +5055,7 @@
         {
           "file": "17 - I'll Take You There.flac",
           "ext": ".flac",
-          "dur": 161.0,
+          "dur": 161,
           "title": {
             "current": "I'll Take You There",
             "new": null
@@ -5240,7 +5240,7 @@
         {
           "file": "07 - Star.flac",
           "ext": ".flac",
-          "dur": 167.0,
+          "dur": 167,
           "title": {
             "current": "Star",
             "new": null
@@ -5419,7 +5419,7 @@
         {
           "file": "03 - Fascination.flac",
           "ext": ".flac",
-          "dur": 347.0,
+          "dur": 347,
           "title": {
             "current": "Fascination",
             "new": null
@@ -5871,7 +5871,7 @@
         {
           "file": "Oasis - (What’s the Story) Morning Glory - 02 - Acquiesce.flac",
           "ext": ".flac",
-          "dur": 268.0,
+          "dur": 268,
           "title": {
             "current": "Acquiesce",
             "new": null
@@ -6069,7 +6069,7 @@
         {
           "file": "Oasis - (What’s the Story) Morning Glory - 13 - Champagne Supernova (Brendan Lynch mix).flac",
           "ext": ".flac",
-          "dur": 418.0,
+          "dur": 418,
           "title": {
             "current": "Champagne Supernova (Brendan Lynch mix)",
             "new": null
@@ -6490,7 +6490,7 @@
         {
           "file": "03 - 1921.flac",
           "ext": ".flac",
-          "dur": 169.0,
+          "dur": 169,
           "title": {
             "current": "1921",
             "new": null
@@ -6526,7 +6526,7 @@
         {
           "file": "05 - Sparks.flac",
           "ext": ".flac",
-          "dur": 125.0,
+          "dur": 125,
           "title": {
             "current": "Sparks",
             "new": null
@@ -6886,7 +6886,7 @@
         {
           "file": "25 - See Me Feel Me  Listening To You.flac",
           "ext": ".flac",
-          "dur": 222.0,
+          "dur": 222,
           "title": {
             "current": "See Me Feel Me / Listening To You",
             "new": null
@@ -7419,7 +7419,7 @@
         {
           "file": "05 - The Song Is Over.flac",
           "ext": ".flac",
-          "dur": 378.0,
+          "dur": 378,
           "title": {
             "current": "The Song Is Over",
             "new": null
@@ -7509,7 +7509,7 @@
         {
           "file": "08 - Behind Blue Eyes.flac",
           "ext": ".flac",
-          "dur": 223.0,
+          "dur": 223,
           "title": {
             "current": "Behind Blue Eyes",
             "new": null
@@ -7563,7 +7563,7 @@
         {
           "file": "09 - Won't Get Fooled Again.flac",
           "ext": ".flac",
-          "dur": 516.0,
+          "dur": 516,
           "title": {
             "current": "Won't Get Fooled Again",
             "new": null
@@ -7987,7 +7987,7 @@
         {
           "file": "10 - No Road Romance.flac",
           "ext": ".flac",
-          "dur": 310.0,
+          "dur": 310,
           "title": {
             "current": "No Road Romance",
             "new": null
@@ -8140,7 +8140,7 @@
         {
           "file": "002 - I Can't Explain (Live On 'Shindig').flac",
           "ext": ".flac",
-          "dur": 121.0,
+          "dur": 121,
           "title": {
             "current": "I Can't Explain (Live On \"Shindig\")",
             "new": null
@@ -8302,7 +8302,7 @@
         {
           "file": "011 - A Quick One, While He's Away (Live 'Rock And Roll Circus' Version).flac",
           "ext": ".flac",
-          "dur": 444.0,
+          "dur": 444,
           "title": {
             "current": "A Quick One, While He's Away (Live \"Rock And Roll Circus\" Version)",
             "new": null
@@ -8522,7 +8522,7 @@
         {
           "file": "04 - Contusion.mp3",
           "ext": ".mp3",
-          "dur": 226.0,
+          "dur": 226,
           "title": {
             "current": "Contusion",
             "new": null
@@ -8792,7 +8792,7 @@
         {
           "file": "19 - Ebony Eyes.mp3",
           "ext": ".mp3",
-          "dur": 249.0,
+          "dur": 249,
           "title": {
             "current": "Ebony Eyes",
             "new": null
@@ -8828,7 +8828,7 @@
         {
           "file": "21 - Easy Goin' Evening (My Mama's Call).mp3",
           "ext": ".mp3",
-          "dur": 237.0,
+          "dur": 237,
           "title": {
             "current": "Easy Goin' Evening (My Mama's Call)",
             "new": null
@@ -9104,7 +9104,7 @@
         {
           "file": "03 - Maxwell's Silver Hammer (2019 Mix).mp3",
           "ext": ".mp3",
-          "dur": 208.0,
+          "dur": 208,
           "title": {
             "current": "Maxwell's Silver Hammer (2019 Mix)",
             "new": null
@@ -9389,7 +9389,7 @@
       },
       "albumartist": {
         "current": null,
-        "new": null
+        "new": "The Beatles"
       },
       "album": {
         "current": "Revolver",
@@ -9397,7 +9397,7 @@
       },
       "year": {
         "current": null,
-        "new": null
+        "new": 1966
       },
       "genre": {
         "current": "Classic Rock",
@@ -9611,7 +9611,7 @@
         {
           "file": "12 - I Want To Tell You (Remastered 2009).mp3",
           "ext": ".mp3",
-          "dur": 148.0,
+          "dur": 148,
           "title": {
             "current": "I Want To Tell You (Remastered 2009)",
             "new": null
@@ -9758,7 +9758,7 @@
         {
           "file": "04 - Getting Better (2017 Mix).mp3",
           "ext": ".mp3",
-          "dur": 167.0,
+          "dur": 167,
           "title": {
             "current": "Getting Better (2017 Mix)",
             "new": null
@@ -9776,7 +9776,7 @@
         {
           "file": "05 - Fixing A Hole (2017 Mix).mp3",
           "ext": ".mp3",
-          "dur": 158.0,
+          "dur": 158,
           "title": {
             "current": "Fixing A Hole (2017 Mix)",
             "new": null
@@ -9920,7 +9920,7 @@
         {
           "file": "13 - A Day In The Life (2017 Mix).mp3",
           "ext": ".mp3",
-          "dur": 331.0,
+          "dur": 331,
           "title": {
             "current": "A Day In The Life (2017 Mix)",
             "new": null
@@ -10154,7 +10154,7 @@
         {
           "file": "26 - A Day In The Life (Take 1 With Hums).mp3",
           "ext": ".mp3",
-          "dur": 292.0,
+          "dur": 292,
           "title": {
             "current": "A Day In The Life (Take 1 With Hums)",
             "new": null

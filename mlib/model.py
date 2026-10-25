@@ -182,12 +182,13 @@ def merge_album_pending(old_album: dict, fresh_album: dict) -> dict:
     """Carry the human's pending `new` decisions from old into fresh (matched
     tracks by track number, fallback positional). Mutates and returns fresh."""
     for name in ALBUM_FIELDS:
-        if name in old_album and name in fresh_album and name != "genre":
-            fresh_album[name] = _merge_field(old_album[name], fresh_album[name])
-        elif name == "genre" and name in old_album and name in fresh_album:
+        if name in old_album and name in fresh_album:
             fresh_album[name] = _merge_field(old_album[name], fresh_album[name])
     if old_album.get("cover", {}).get("action"):
         fresh_album.setdefault("cover", {})["action"] = old_album["cover"]["action"]
+    # audit history survives re-catalogs when the album didn't move
+    if old_album.get("_applied") and old_album.get("path") == fresh_album.get("path"):
+        fresh_album["_applied"] = old_album["_applied"]
     old_by_key = sorted(old_album.get("tracks", []), key=_same_track_key)
     fresh_by_key = sorted(fresh_album.get("tracks", []), key=_same_track_key)
     for ot, ft in zip(old_by_key, fresh_by_key):

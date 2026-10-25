@@ -15,6 +15,8 @@ from pathlib import Path
 
 import mutagen
 
+from . import tags
+
 BITRATE_DEFAULT = "320k"
 
 
@@ -68,3 +70,97 @@ def tmp_convert_name(i: int, src: Path) -> str:
     removes dotfiles — conversions must survive junk cleanup) and the
     __mlibcv marker cannot collide with real files."""
     return f"__mlibcv{i:03d} {src.stem}.mp3"
+
+# ==================================================== standalone command part
+
+def _cover_source_for(folder: Path) -> Path | None:
+    """First original file whose embedded art we can pull (after conversion)."""
+    for p in sorted(folder.iterdir()):
+        if p.suffix.lower() in (".flac", ".m4a", ".mp3", ".opus", ".ogg"):
+            if tags.embedded_picture_bytes(p):
+                return p
+    return None
+
+
+def convert_root(root: Path, bitrate: str = BITRATE_DEFAULT,
+                 dry_run: bool = False, remove_originals: bool = False
+                 ) -> list[dict]:
+    """Standalone conversion, no plan needed (design §2/§6/D3).
+
+    Converts flac/opus/ogg/webm → mp3 320 CBR IN PLACE (same folder), carries
+    source tags, and materializes cover.jpg when a folder has no cover file
+    but its sources carry art. Originals stay unless --remove-originals is
+    explicitly passed (nothing is ever deleted implicitly).
+    Returns per-file report dicts.
+    """
+    from mlib.catalog import AUDIO_EXTS, IMAGE_EXTS
+    from mlib.tags import CANONICAL_COVER
+    src_targets = {".flac", ".opus", ".ogg", ".webm"}   # D3 set
+    report: list[dict] = []
+    folders_done: set[Path] = set()
+    for p in sorted(Path(root).rglob("*")):
+        if not p.is_file() or p.suffix.lower() not in src_targets:
+            continue
+        if is_hidden_junk(p):
+            continue
+        dst = p.with_suffix(".mp3")
+        entry = {"src": p.name, "dst": dst.name, "folder": p.parent.name,
+                 "action": None, "seconds": None}
+        if dst.exists():
+            entry["action"] = f"skipped (dst exists)"
+            report.append(entry)
+            continue
+        if dry_run:
+            entry["action"] = "would convert"
+            report.append(entry)
+            continue
+        _, seconds = convert_file(p, dst, bitrate=bitrate)
+        entry["action"] = "converted"
+        entry["seconds"] = seconds
+        if remove_originals:
+            p.unlink()          # explicit user instruction (D4 escape hatch)
+            entry["removed_original"] = True
+        report.append(entry)
+        folders_done.add(p.parent)
+
+    # after conversion, cover.jpg for folders that have none at all
+    if not dry_run:
+        folders = {Path(root)} | folders_done
+        for folder in list(folders):
+            if not folder.is_dir():
+                continue
+            images = [q for q in folder.iterdir()
+                      if q.suffix.lower() in IMAGE_EXTS
+                      and not is_hidden_junk(q)]
+            if any(q.name == CANONICAL_COVER or
+                   q.name.casefold() == CANONICAL_COVER for q in images):
+                continue
+            if images:
+                continue        # some image exists; leave naming to curation
+            src = _cover_source_for(folder)
+            if src is None:
+                continue
+            data = tags.embedded_picture_bytes(src)
+            if data is None:
+                continue
+            cover = folder / CANONICAL_COVER
+            if tags.sniff_mime(data) == "image/png":
+                tmp = folder / "__mlibcover.png"
+                tmp.write_bytes(data)
+                subprocess.run(["ffmpeg", "-nostdin", "-y", "-v", "error",
+                                "-i", str(tmp), "-q:v", "2", str(cover)],
+                               check=True, capture_output=True)
+                tmp.unlink(missing_ok=True)
+            else:
+                cover.write_bytes(data)
+            report.append({"src": src.name, "dst": CANONICAL_COVER,
+                           "folder": folder.name, "action": "cover extracted",
+                           "seconds": None})
+    return report
+
+
+def is_hidden_junk(p: Path) -> bool:
+    import os
+    name = p.name
+    return name.startswith(".") and name not in (".", "..") \
+        or name.startswith("._")

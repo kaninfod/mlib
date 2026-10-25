@@ -182,7 +182,7 @@
           "Billie Holiday & Lester Young",
           "Billie Holiday acc. by Eddie Heywood and His Orchestra"
         ],
-        "new": null,
+        "new": "Billie Holiday & Lester Young",
         "mixed": true
       },
       "albumartist": {
@@ -205,7 +205,7 @@
           "Big Band",
           "Vocal Jazz"
         ],
-        "new": null,
+        "new": "Jazz",
         "mixed": true
       },
       "cover": {
@@ -231,7 +231,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "01 He Ain’t Got Rhythm.mp3"
         },
@@ -249,7 +249,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "01 My First Impression of You.mp3"
         },
@@ -267,7 +267,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "01 The Man I Love.mp3"
         },
@@ -285,7 +285,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "02 This Year’s Kisses.mp3"
         },
@@ -303,7 +303,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "02 My First Impression of You (prise master).mp3"
         },
@@ -321,7 +321,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "02 You’re Just a No‐Account.mp3"
         },
@@ -339,7 +339,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "03 Why Was I Born_.mp3"
         },
@@ -357,7 +357,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "03 When You’re Smiling (prise master).mp3"
         },
@@ -375,7 +375,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "03 You’re a Lucky Guy.mp3"
         },
@@ -393,7 +393,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "04 I Must Have That Man.mp3"
         },
@@ -411,7 +411,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "04 When You’re Smiling.mp3"
         },
@@ -429,7 +429,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "04 I’m Pulling Through.mp3"
         },
@@ -447,7 +447,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "05 Sun Showers.mp3"
         },
@@ -465,7 +465,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "05 I Can’t Believe That You’re in Love With Me.mp3"
         },
@@ -483,7 +483,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "05 Laughing at Life (prise master).mp3"
         },
@@ -501,7 +501,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "06 Yours and Mine.mp3"
         },
@@ -519,7 +519,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "06 I Can’t Believe That You’re in Love With Me (prise master).mp3"
         },
@@ -537,7 +537,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "06 Laughing at Life.mp3"
         },
@@ -555,7 +555,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "07 Mean to Me (prise master).mp3"
         },
@@ -573,7 +573,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "07 If Dreams Come True (prise master).mp3"
         },
@@ -591,7 +591,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "07 Time on My Hands.mp3"
         },
@@ -609,7 +609,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "08 Mean to Me.mp3"
         },
@@ -627,7 +627,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "08 If Dreams Come True.mp3"
         },
@@ -645,7 +645,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "08 The Man I Love.mp3"
         },
@@ -663,7 +663,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "09 Foolin’ Myself.mp3"
         },
@@ -681,7 +681,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "09 Now They Call It Swing.mp3"
         },
@@ -699,7 +699,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "09 Let’s Do It (prise master).mp3"
         },
@@ -717,7 +717,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "10 Easy Living.mp3"
         },
@@ -735,7 +735,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "10 Now They Call It Swing (prise master).mp3"
         },
@@ -753,7 +753,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "10 Let’s Do It.mp3"
         },
@@ -771,7 +771,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "11 I’ll Never Be the Same.mp3"
         },
@@ -789,7 +789,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "11 Back in Your Own Backyard (prise master).mp3"
         },
@@ -807,7 +807,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "11 All of Me (prise master).mp3"
         },
@@ -825,7 +825,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "12 Me, Myself and I.mp3"
         },
@@ -843,7 +843,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "12 Back in Your Own Backyard.mp3"
         },
@@ -861,7 +861,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "12 All of Me.mp3"
         },
@@ -879,7 +879,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "13 Me, Myself and I (prise master).mp3"
         },
@@ -897,7 +897,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "13 When a Woman Loves a Man.mp3"
         },
@@ -915,7 +915,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "13 All of Me.mp3"
         },
@@ -933,7 +933,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "14 A Sailboat in the Moonlight.mp3"
         },
@@ -951,7 +951,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "14 The Very Thought of You.mp3"
         },
@@ -969,7 +969,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "14 I Cried for You.mp3"
         },
@@ -987,7 +987,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "15 Born to Love.mp3"
         },
@@ -1005,7 +1005,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "15 I Can’t Get Started (prise master).mp3"
         },
@@ -1023,7 +1023,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "15 Fine and Mellow.mp3"
         },
@@ -1041,7 +1041,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "16 Without Your Love (prise master).mp3"
         },
@@ -1059,7 +1059,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "16 I Can’t Get Started.mp3"
         },
@@ -1077,7 +1077,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "16 He’s Funny That Way.mp3"
         },
@@ -1095,7 +1095,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "17 Without Your Love.mp3"
         },
@@ -1113,7 +1113,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "17 I’ve Got a Date With a Dream.mp3"
         },
@@ -1131,7 +1131,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "17 The Man I Love.mp3"
         },
@@ -1149,7 +1149,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "18 Getting Some Fun Out of Life.mp3"
         },
@@ -1167,7 +1167,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "18 I’ve Got a Date With a Dream (prise master).mp3"
         },
@@ -1185,7 +1185,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "18 Gee Baby, Ain’t I Good to You_.mp3"
         },
@@ -1203,7 +1203,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "19 Who Wants Love_.mp3"
         },
@@ -1221,7 +1221,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "19 You Can’t Be Mine.mp3"
         },
@@ -1239,7 +1239,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "19 All of Me.mp3"
         },
@@ -1257,7 +1257,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "20 Trav’lin’ All Alone.mp3"
         },
@@ -1275,7 +1275,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "20 Everybody’s Laughing.mp3"
         },
@@ -1293,7 +1293,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "20 Billie’s Blues (I Love my Man).mp3"
         },
@@ -1311,7 +1311,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "21 He’s Funny That Way.mp3"
         },
@@ -1329,7 +1329,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "21 Here It Is To‐morrow Again.mp3"
         },
@@ -1347,7 +1347,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "22 I Can’t Get Started.mp3"
         },
@@ -1365,7 +1365,7 @@
           },
           "tracktotal": {
             "current": null,
-            "new": null
+            "new": 64
           },
           "target_file": "22 Say It With a Kiss.mp3"
         }
@@ -9389,7 +9389,7 @@
       },
       "albumartist": {
         "current": null,
-        "new": null
+        "new": "The Beatles"
       },
       "album": {
         "current": "Revolver",
@@ -9397,7 +9397,7 @@
       },
       "year": {
         "current": null,
-        "new": 0
+        "new": 1966
       },
       "genre": {
         "current": "Classic Rock",
