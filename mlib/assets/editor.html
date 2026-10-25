@@ -476,6 +476,24 @@ function renderAlbumCard(root) {
     markDirty(); updateCounts(); render();
   }));
   card.appendChild(tt);
+  // renumber helper: continuing track numbers across a multi-disc merge
+  const rn = el("div", "fld");
+  rn.appendChild(el("span", "lab", "tracks → renumber"));
+  rn.appendChild(el("span", "cur", "set 1…N in current order (disc merges: start where the previous disc ended)"));
+  const rnInput = el("input", undefined, ""); rnInput.type = "number"; rnInput.min = "1";
+  rn.appendChild(rnInput);
+  rn.appendChild(btn("Set", "small", () => {
+    const v = rnInput.value.trim();
+    if (v === "" || !Number.isFinite(+v) || +v < 1) return;
+    const start = Math.round(+v);
+    (alb.tracks || []).forEach((t, i) => {
+      const next = {...t.track, "new": start + i};
+      delete next.inferred;
+      t.track = next;
+    });
+    markDirty(); updateCounts(); render();
+  }, "Renumber all tracks sequentially from the given number"));
+  card.appendChild(rn);
   const cov = alb.cover || {};
   const covLine = el("div", "cover");
   const covBits = [];
