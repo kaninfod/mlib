@@ -10,6 +10,7 @@ from pathlib import Path
 
 import typer
 
+from . import apply as apply_mod
 from . import catalog as catalog_mod
 from . import edit as edit_mod
 from . import model, validate as validate_mod
@@ -50,7 +51,7 @@ def catalog(ctx: typer.Context,
             root: Path = typer.Argument(..., exists=True, file_okay=False,
                                         help="Folder to scan (collection, staging, any music root)"),
             out: Path = typer.Option(None, "--out", help="Plan path (default <root>/mlib_plan.json)"),
-            force: bool = typer.Option(False, "--force", help="Overwrite an existing plan (previous saved as .bak)"),
+            force: bool = typer.Option(False, "--force", help="Overwrite an existing plan (previous saved as .bak); pending edits are carried over via merge"),
             open_ed: bool = typer.Option(False, "--open", help="Open the editor straight after cataloging (serves until Ctrl+C)")):
     """Scan a root and produce the edit plan (mlib_plan.json)."""
     plan_path = Path(out) if out else Path(root) / PLAN_NAME
@@ -58,10 +59,17 @@ def catalog(ctx: typer.Context,
         raise typer.BadParameter(f"{plan_path} exists — pass --force to regenerate "
                                  f"(previous version is kept as .bak)")
     try:
-        plan = catalog_mod.build_plan(Path(root))
+        fresh = catalog_mod.build_plan(Path(root))
     except FileNotFoundError as e:
         raise typer.BadParameter(str(e))
-    model.save_plan(plan_path, plan, backup=plan_path.exists())
+    if force and plan_path.exists():
+        try:
+            old = model.load_plan(plan_path)
+            fresh = model.merge_rescan(old, fresh)   # pending edits survive
+            fresh["_meta"]["merged"] = True
+        except PlanError:
+            pass
+    model.save_plan(plan_path, fresh, backup=plan_path.exists())
     counts = model.plan_counts(plan)
 
     by_cat = Counter(i.split(":", 1)[0] for alb in plan["albums"] for i in alb.get("issues", []))
@@ -79,6 +87,39 @@ def catalog(ctx: typer.Context,
     _emit(ctx, plan, "\n".join(human))
     if open_ed:
         edit_mod.run_until_interrupt(plan_path, port=0, open_browser=True)
+
+
+@app.command()
+def apply(ctx: typer.Context,
+          target: Path = typer.Argument(..., help="Plan file or scanned root (uses <root>/mlib_plan.json)"),
+          write: bool = typer.Option(False, "--write", help="Execute the changes (default: preview only)"),
+          album: list[str] = typer.Option(None, "--album", help="Restrict to album path(s) — repeatable"),
+          keep_going: bool = typer.Option(False, "--keep-going", help="Continue on album errors instead of stopping"),
+          bitrate: str = typer.Option("320k", "--bitrate", help="mp3 bitrate for conversions (default 320k CBR)")):
+    """Converge files toward the plan: convert, tag, cover, rename, clean.
+
+    Preview by default — pass --write to actually change files.
+    The plan is updated to the post-apply state (applied albums are refreshed
+    in place); run `mlib catalog <root> --force` afterwards for a full refresh
+    (pending edits survive the merge)."""
+    plan_path = _resolve_plan(target)
+    plan = model.load_plan(plan_path)
+    root = Path(plan.get("_meta", {}).get("root") or plan_path.parent)
+    if not root.is_dir():
+        raise typer.BadParameter(f"plan root does not exist on this machine: "
+                                 f"{root} — run apply where the files live "
+                                 f"(P3 --host automates this)")
+    only = set(album) if album else None
+    results, changed = apply_mod.run_apply(plan, root, write=write,
+                                           only=only, keep_going=keep_going,
+                                           bitrate=bitrate)
+    if write and changed:
+        model.save_plan(plan_path, plan, backup=True)
+    human = apply_mod.print_results(results, write)
+    if write and changed:
+        human += ("\n\nPlan updated to post-apply state. A full refresh of "
+                  "issues/counts: mlib catalog <root> --force")
+    _emit(ctx, results, human)
 
 
 @app.command()

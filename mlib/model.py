@@ -161,3 +161,50 @@ def pending_changes(album: dict) -> list[dict]:
 
 def pending_albums(plan: dict) -> list[str]:
     return [a["path"] for a in plan.get("albums", []) if pending_changes(a)]
+
+# ---------------------------------------------------------------- rescan merge
+
+def _merge_field(old: dict, fresh: dict) -> dict:
+    """Carry a decision from the previous plan into a fresh catalog entry."""
+    if old.get("new") is not None:
+        merged = dict(fresh)
+        merged["new"] = old["new"]
+        return merged
+    return fresh
+
+
+def _same_track_key(trk: dict) -> tuple:
+    cur = trk.get("track", {}).get("current")
+    return (cur if cur is not None else 10_000, trk.get("file", ""))
+
+
+def merge_album_pending(old_album: dict, fresh_album: dict) -> dict:
+    """Carry the human's pending `new` decisions from old into fresh (matched
+    tracks by track number, fallback positional). Mutates and returns fresh."""
+    for name in ALBUM_FIELDS:
+        if name in old_album and name in fresh_album and name != "genre":
+            fresh_album[name] = _merge_field(old_album[name], fresh_album[name])
+        elif name == "genre" and name in old_album and name in fresh_album:
+            fresh_album[name] = _merge_field(old_album[name], fresh_album[name])
+    if old_album.get("cover", {}).get("action"):
+        fresh_album.setdefault("cover", {})["action"] = old_album["cover"]["action"]
+    old_by_key = sorted(old_album.get("tracks", []), key=_same_track_key)
+    fresh_by_key = sorted(fresh_album.get("tracks", []), key=_same_track_key)
+    for ot, ft in zip(old_by_key, fresh_by_key):
+        for name in TRACK_FIELDS:
+            ft[name] = _merge_field(ot.get(name, {}), ft.get(name, {}))
+    return fresh_album
+
+
+def merge_rescan(old_plan: dict, fresh_plan: dict) -> dict:
+    """Merge a fresh catalog with the previous plan's pending decisions,
+    matched by album _uid. Unmatched albums enter as-is (new arrivals or
+    post-apply locations). Returns the merged plan (fresh_plan mutated)."""
+    old_by_uid = {a["_uid"]: a for a in old_plan.get("albums", [])
+                  if a.get("_uid")}
+    for alb in fresh_plan.get("albums", []):
+        old = old_by_uid.get(alb.get("_uid", ""))
+        if old:
+            merge_album_pending(old, alb)
+    fresh_plan["_meta"]["merged_from"] = old_plan.get("_meta", {}).get("created")
+    return fresh_plan

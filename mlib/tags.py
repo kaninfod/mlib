@@ -1,8 +1,10 @@
-"""Tag reading via mutagen — P0 exposes the read side only.
+"""Tag read + write via mutagen.
 
-Handles: mp3 (ID3), m4a (MP4 atoms), flac/ogg/opus (Vorbis comments),
+Read side: mp3 (ID3), m4a (MP4 atoms), flac/ogg/opus (Vorbis comments),
 wma (ASF), wav (ID3-in-wav); webm containers expose duration only.
-The write side arrives with apply (P2), in the same module.
+Write side (P2): the plan converges mp3 files — always load-then-modify
+(a fresh ID3() + save WIPES existing frames), write only changed frames,
+v2.4 UTF-8 by default. The cover layer extracts/normalizes/embeds.
 """
 from __future__ import annotations
 
@@ -16,6 +18,7 @@ from mutagen.mp4 import MP4
 from mutagen.wave import WAVE
 from mutagen.asf import ASF
 from mutagen.flac import FLAC
+from mutagen.id3 import (ID3, TALB, TCON, TDRC, TIT2, TPE1, TPE2, TRCK, APIC)
 
 AUDIO_EXTS = {".mp3", ".m4a", ".flac", ".opus", ".ogg", ".wma", ".wav", ".webm"}
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp"}
@@ -190,3 +193,146 @@ def _read_vc_style(m, info: TrackInfo) -> None:
         _vc_get(tags, k) for k in ("metadata_block_picture", "coverart")) \
         or getattr(m, "pictures", None) not in (None, []) \
         or (isinstance(m, ASF) and _vc_get(tags, "WM/Picture") is not None)
+
+# ================================================================= write side
+
+def _norm_txt(v) -> str | None:
+    if v is None:
+        return None
+    s = str(v).strip()
+    return s or None
+
+
+def _frame_text(tags, fid: str) -> str | None:
+    frames = tags.getall(fid)
+    if not frames:
+        return None
+    # frame.text is a LIST of strings — str() of it would give "['x']"
+    return _norm_txt(_first(getattr(frames[0], "text", None)))
+
+
+def _id3_file(path: Path):
+    """Load an mp3 ensuring ID3 exists — load-then-modify, never a blind wipe."""
+    m = MP3(str(path))
+    existed = m.tags is not None
+    if m.tags is None:
+        m.add_tags()
+    return m, m.tags, existed
+
+
+def id3_fields(path: Path) -> dict:
+    """Read back the fields we write (for skip-if-correct + verification)."""
+    m, tags, _ = _id3_file(path)
+    track_s = _frame_text(tags, "TRCK")
+    track, total = parse_track_string(track_s) if track_s else (None, None)
+    return {
+        "title": _frame_text(tags, "TIT2"),
+        "artist": _frame_text(tags, "TPE1"),
+        "album": _frame_text(tags, "TALB"),
+        "albumartist": _frame_text(tags, "TPE2"),
+        "year": parse_year(_frame_text(tags, "TDRC")),
+        "genre": _frame_text(tags, "TCON"),
+        "track": track,
+        "tracktotal": total,
+    }
+
+
+def write_tag_fields(path: Path, *, title=None, artist=None, album=None,
+                     albumartist=None, year=None, genre=None,
+                     track=None, tracktotal=None) -> tuple[list[str], list[str]]:
+    """Converge the mp3's frames toward the given fields.
+
+    None = leave existing untouched (never invent). Returns (written, kept)
+    lists of field names for reporting. Only saves when something changed.
+    """
+    m, tags, _ = _id3_file(path)
+    written: list[str] = []
+    cur = id3_fields(path)
+
+    if title is not None and cur["title"] != _norm_txt(title):
+        tags.add(TIT2(encoding=3, text=[str(title)])); written.append("title")
+    if artist is not None and cur["artist"] != _norm_txt(artist):
+        tags.add(TPE1(encoding=3, text=[str(artist)])); written.append("artist")
+    if album is not None and cur["album"] != _norm_txt(album):
+        tags.add(TALB(encoding=3, text=[str(album)])); written.append("album")
+    if albumartist is not None and cur["albumartist"] != _norm_txt(albumartist):
+        tags.add(TPE2(encoding=3, text=[str(albumartist)])); written.append("albumartist")
+    if year is not None and cur["year"] != int(year):
+        tags.add(TDRC(encoding=3, text=[str(int(year))])); written.append("year")
+    if genre is not None and cur["genre"] != _norm_txt(genre):
+        tags.add(TCON(encoding=3, text=[str(genre)])); written.append("genre")
+    if track is not None or tracktotal is not None:
+        want_t = int(track) if track is not None else None
+        want_tt = int(tracktotal) if tracktotal is not None else None
+        if want_t is not None:
+            want_s = f"{want_t}/{want_tt}" if want_tt else str(want_t)
+            if cur["track"] != want_t or (want_tt and cur["tracktotal"] != want_tt):
+                tags.add(TRCK(encoding=3, text=[want_s])); written.append("track")
+        elif want_tt is not None:
+            # never invent a track number: only restate an existing one
+            base_num = cur["track"]
+            if base_num is not None and cur["tracktotal"] != want_tt:
+                tags.add(TRCK(encoding=3, text=[f"{base_num}/{want_tt}"]))
+                written.append("tracktotal")
+
+    if written:
+        tags.save(str(path))
+    return written, []
+
+
+def extract_picture(path: Path) -> tuple[bytes, str] | None:
+    """Pull embedded art (mp3 APIC / flac Picture / mp4 covr). None if absent."""
+    try:
+        if path.suffix.lower() == ".flac":
+            f = FLAC(str(path))
+            if f.pictures:
+                return f.pictures[0].data, (f.pictures[0].mime or "image/jpeg")
+        if path.suffix.lower() == ".mp3":
+            m, tags, _ = _id3_file(path)
+            aps = tags.getall("APIC")
+            if aps:
+                return aps[0].data, (aps[0].mime or "image/jpeg")
+        if path.suffix.lower() == ".m4a":
+            m = MP4(str(path))
+            covr = (m.tags or {}).get("covr")
+            if covr:
+                return bytes(covr[0]), "image/jpeg"
+    except Exception:
+        return None
+    return None
+
+
+def _is_jpeg(data: bytes) -> bool:
+    return data[:3] == b"\xff\xd8\xff"
+
+
+def _is_png(data: bytes) -> bool:
+    return data[:8] == b"\x89PNG\r\n\x1a\n"
+
+
+def sniff_mime(data: bytes) -> str:
+    if _is_png(data):
+        return "image/png"
+    return "image/jpeg"
+
+
+def embedded_picture_bytes(path: Path) -> bytes | None:
+    """Return the embedded art bytes matching the canonical cover mime gate."""
+    pic = extract_picture(path)
+    if not pic:
+        return None
+    return pic[0]
+
+
+def embed_picture(path: Path, data: bytes, mime: str) -> bool:
+    """Ensure the mp3 carries this art (APIC type 3). Skip when identical."""
+    m, tags, _ = _id3_file(path)
+    aps = tags.getall("APIC")
+    for ap in aps:
+        if ap.data == data:
+            return False
+    # replace non-matching art with the canonical one (single APIC discipline)
+    tags.delall("APIC")
+    tags.add(APIC(encoding=3, mime=mime, type=3, desc="Cover (front)", data=data))
+    tags.save(str(path))
+    return True
