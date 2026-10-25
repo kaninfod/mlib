@@ -22,7 +22,7 @@ test = ["pytest>=8"]
 mlib = "mlib.cli:app"
 
 [tool.setuptools]
-packages = ["mlib"]
+packages = ["mlib", "mlib.assets"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

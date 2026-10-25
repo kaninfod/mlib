@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mlib plan editor</title>
+<style>
+  :root{
+    --bg:#f6f6f4; --card:#fff; --ink:#1c1c1c; --dim:#777; --line:#e3e3e0;
+    --accent:#2d6cdf; --ok:#2a8b38; --warn:#b3570f; --dirty:#c94444;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  header{position:sticky;top:0;z-index:5;background:var(--card);
+    border-bottom:1px solid var(--line);padding:10px 16px;
+    display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  header h1{font-size:16px;margin:0 auto 0 0}
+  .tabs{display:flex;gap:6px}
+  .tabs button{font:inherit}
+  button{cursor:pointer;border:1px solid var(--line);border-radius:7px;
+    background:var(--card);padding:4px 10px;font:inherit}
+  button:hover{border-color:var(--accent);color:var(--accent)}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  button.primary:disabled{opacity:.5;cursor:default}
+  button.ghost{border-color:transparent;color:var(--dim)}
+  button.small{padding:1px 7px;font-size:12px}
+  #dirty{font-size:12px;color:var(--dirty)}
+  #counts{font-size:12px;color:var(--dim)}
+  main{max-width:1100px;margin:16px auto;padding:0 16px 60px}
+  .banner{background:#fdecec;border:1px solid #eebbbb;color:#8a1f1f;
+    border-radius:8px;padding:6px 10px;margin-bottom:12px;display:none}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 18px}
+  .chip{background:var(--card);border:1px solid var(--line);border-radius:20px;
+    padding:2px 10px;font-size:12.5px}
+  .group{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:10px 14px;margin-bottom:10px}
+  .group .ghead{display:flex;gap:10px;align-items:baseline}
+  .group .ghead b{font-size:15px}
+  .group .ghead .cnt{color:var(--dim);font-size:12.5px}
+  .rows{margin-top:8px;display:flex;flex-direction:column;gap:3px}
+  .row{display:flex;gap:10px;align-items:center;padding:4px 8px;border-radius:7px;cursor:pointer}
+  .row:hover{background:#eef3fe}
+  .row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .row .sub{color:var(--dim);font-size:12px;white-space:nowrap}
+  .row.warn .sub{color:var(--warn)}
+  input[type=text],input[type=number],select{font:inherit;padding:3px 7px;
+    border:1px solid var(--line);border-radius:6px;background:#fff;min-width:60px}
+  input.bad{border-color:var(--dirty);outline-color:var(--dirty)}
+  table{width:100%;border-collapse:collapse}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--dim);
+    text-align:left;padding:4px 8px;border-bottom:1px solid var(--line)}
+  td{padding:3px 8px;border-bottom:1px solid #f0f0ee;vertical-align:middle}
+  td input{width:100%}
+  td.num{width:64px}
+  td.tgt{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:var(--dim);max-width:260px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .fld{display:grid;grid-template-columns:120px 1fr 260px 30px;gap:8px;
+    padding:4px 8px;border-bottom:1px solid #f4f4f1;align-items:center}
+  .fld .lab{color:var(--dim)}
+  .fld .cur{color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .iss{color:var(--warn);font-size:12.5px;margin:2px 0}
+  .cover{font-size:12.5px;color:var(--dim);margin:6px 0}
+  .cover .set{color:var(--ink)}
+  .alhead{display:flex;align-items:baseline;gap:10px;margin:14px 0 8px}
+  .alhead h2{margin:0;font-size:16px;word-break:break-all}
+  .back{font-size:13px}
+  footer{position:fixed;bottom:0;left:0;right:0;background:var(--card);
+    border-top:1px solid var(--line);padding:6px 16px;font-size:12px;color:var(--dim);
+    display:flex;justify-content:space-between}
+  .pendingrow{display:flex;gap:8px;padding:4px 8px;border-radius:7px;cursor:pointer}
+  .pendingrow:hover{background:#eef3fe}
+  .pendingrow .chg{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--ink)}
+  .pendingrow .del{color:var(--dirty)}
+  .hfill{flex:1}
+</style>
+</head>
+<body>
+<header>
+  <h1>mlib plan editor</h1>
+  <div class="tabs" id="tabs"></div>
+  <div class="hfill"></div>
+  <span id="counts"></span>
+  <span id="dirty" hidden>unsaved</span>
+  <button id="savebtn" class="primary" disabled>Save now</button>
+</header>
+<main>
+  <div class="banner" id="banner"></div>
+  <div id="content"></div>
+</main>
+<footer>
+  <span id="fmeta"></span>
+  <span>planning only — <b>apply</b> (P2) converges the files · autosaves with .bak on the server</span>
+</footer>
+<script>
+"use strict";
+const S = {
+  plan: null, view: "tabs", tab: "issues", album: null,
+  dirty: false, saveTimer: null, issueCat: null,
+};
+
+// ---------- tiny DOM helpers
+const $ = id => document.getElementById(id);
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text !== undefined && text !== null) n.textContent = text;
+  return n;
+}
+function btn(label, cls, onclick, title) {
+  const b = el("button", cls, label);
+  b.onclick = onclick;
+  if (title) b.title = title;
+  return b;
+}
+const fmt = v => (v === null || v === undefined) ? "—" : String(v);
+const curOf = f => (f && f.current !== null && f.current !== undefined) ? fmt(f.current) : null;
+
+// ---------- model helpers (mirror of plan v2 semantics)
+const ALBUM_FIELDS = ["artist", "albumartist", "album", "year", "genre"];
+const NUMERIC = new Set(["year", "track", "tracktotal"]);
+function countEdits(plan) {
+  let edits = 0, albums = 0, issues = 0;
+  for (const alb of plan.albums || []) {
+    issues += (alb.issues || []).length;
+    let has = false;
+    const bump = f => { if (f && f.new !== null && f.new !== undefined && f.new !== f.current) { edits++; has = true; } };
+    ALBUM_FIELDS.forEach(k => bump(alb[k]));
+    if (alb.cover && alb.cover.action) { edits++; has = true; }
+    (alb.tracks || []).forEach(t => {
+      ["title", "track", "tracktotal"].forEach(k => bump(t[k]));
+    });
+    if (has) albums++;
+  }
+  return { edits, albums, issues };
+}
+function byPath(p) { return S.plan.albums.find(a => a.path === p); }
+
+// ---------- persistence
+function banner(msg) {
+  const b = $("banner");
+  if (!msg) { b.style.display = "none"; return; }
+  b.style.display = "block"; b.textContent = msg;
+}
+function markDirty() {
+  S.dirty = true;
+  $("dirty").hidden = false;
+  $("savebtn").disabled = false;
+  updateCounts();
+  clearTimeout(S.saveTimer);
+  S.saveTimer = setTimeout(save, 1200);   // autosave
+}
+async function save() {
+  clearTimeout(S.saveTimer);
+  if (!S.dirty) return;
+  try {
+    const r = await fetch("/plan", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(S.plan),
+    });
+    if (!r.ok) {
+      banner("save failed (" + r.status + "): " + (await r.json()).error);
+      return;
+    }
+    S.dirty = false;
+    $("dirty").hidden = true;
+    $("savebtn").disabled = true;
+    banner("");
+  } catch (e) {
+    banner("save failed: " + e);
+  }
+  updateCounts();
+}
+
+// ---------- header
+function updateCounts() {
+  const c = countEdits(S.plan);
+  $("counts").textContent =
+    `${c.edits} edit(s) in ${c.albums} album(s) · ${c.issues} issue(s) · ${S.plan.albums.length} albums`;
+  const meta = S.plan._meta || {};
+  $("fmeta").textContent = `plan: ${meta.root || "?"} — v${meta.v || "?"}`;
+}
+function renderTabs() {
+  const t = $("tabs"); t.innerHTML = "";
+  const defs = [
+    ["issues", "Issues & edits"], ["genre", "By genre"], ["artist", "By artist"],
+  ];
+  defs.forEach(([k, label]) => {
+    const b = btn(label, k === S.tab ? "primary small" : "small", () => {
+      S.tab = k; S.issueCat = null; render();
+      if (S.dirty) save();
+    });
+    t.appendChild(b);
+  });
+}
+
+// ---------- views
+function render() {
+  banner("");
+  renderTabs();
+  updateCounts();
+  const c = $("content"); c.innerHTML = "";
+  if (S.view === "album") renderAlbumCard(c);
+  else renderHome(c);
+}
+
+function navHome() { S.view = "tabs"; S.album = null; render(); }
+function navAlbum(path) { S.view = "album"; S.album = path; render(); }
+
+function renderHome(root) {
+  if (S.tab === "genre") return renderGenreView(root);
+  if (S.tab === "artist") return renderArtistView(root);
+  return renderIssuesView(root);
+}
+
+// ----- issues & edits
+function renderIssuesView(root) {
+  const albums = S.plan.albums || [];
+  const flagged = albums.filter(a => (a.issues || []).length);
+  const byCat = {};
+  flagged.forEach(a => (a.issues || []).forEach(i => {
+    const cat = i.split(":", 1)[0];
+    byCat[cat] = (byCat[cat] || 0) + 1;
+  }));
+  const chips = el("div", "chips");
+  chips.appendChild(el("span", "chip", `${albums.length} albums`));
+  chips.appendChild(el("span", "chip", `${flagged.length} flagged`));
+  Object.keys(byCat).sort().forEach(cat =>
+    chips.appendChild(el("span", "chip", `${cat}: ${byCat[cat]}`)));
+  root.appendChild(chips);
+
+  // pending edits first
+  const pend = [];
+  albums.forEach(alb => {
+    (function collect(o, file) {
+      ALBUM_FIELDS.forEach(k => {
+        const f = o[k];
+        if (f && f.new !== null && f.new !== undefined && f.new !== f.current)
+          pend.push({ alb, file, k, cur: f.current, nw: f.new });
+      });
+    })(alb, null);
+    (alb.tracks || []).forEach(t => {
+      ["title", "track", "tracktotal"].forEach(k => {
+        const f = t[k];
+        if (f && f.new !== null && f.new !== undefined && f.new !== f.current)
+          pend.push({ alb, file: t.file, k, cur: f.current, nw: f.new });
+      });
+    });
+    if (alb.cover && alb.cover.action)
+      pend.push({ alb, file: null, k: "cover.action", cur: null, nw: alb.cover.action });
+  });
+
+  if (pend.length) {
+    const g = el("div", "group");
+    const gh = el("div", "ghead");
+    gh.appendChild(el("b", "", `Pending edits`));
+    gh.appendChild(el("span", "cnt", `${pend.length} change(s) — click an album to inspect`));
+    g.appendChild(gh);
+    const rows = el("div", "rows");
+    const byAlbum = new Map();
+    pend.forEach(p => {
+      if (!byAlbum.has(p.alb.path)) byAlbum.set(p.alb.path, []);
+      byAlbum.get(p.alb.path).push(p);
+    });
+    [...byAlbum.entries()].sort((a, b) => a[0].localeCompare(b[0])).forEach(([p, list]) => {
+      const row = el("div", "pendingrow");
+      row.onclick = () => navAlbum(p);
+      row.appendChild(el("span", "", list[0].alb.path));
+      const del = el("span", "hfill");
+      list.slice(0, 3).forEach(c => {
+        const scope = c.file ? `·${c.file}` : "";
+        const d = el("span", "chg");
+        d.appendChild(el("span", "del", c.k + scope + ": "));
+        d.appendChild(document.createTextNode(`${fmt(c.cur)} → ${fmt(c.nw)}`));
+        del.appendChild(d);
+      });
+      row.appendChild(del);
+      if (list.length > 3) row.appendChild(el("span", "sub", `+${list.length - 3} more`));
+      rows.appendChild(row);
+    });
+    g.appendChild(rows);
+    root.appendChild(g);
+  }
+
+  // flagged albums list
+  const g = el("div", "group");
+  const gh = el("div", "ghead");
+  gh.appendChild(el("b", "", "Albums flagged by catalog"));
+  gh.appendChild(el("span", "cnt", "issues found on disk (edit the fields to fix)"));
+  g.appendChild(gh);
+  const rows = el("div", "rows");
+  flagged.sort((a, b) => a.path.localeCompare(b.path)).forEach(alb => {
+    const row = el("div", "row");
+    row.onclick = () => navAlbum(alb.path);
+    row.appendChild(el("span", "nm", alb.path));
+    const first = (alb.issues || []).slice(0, 2).join(" · ");
+    row.appendChild(el("span", "sub", `${(alb.issues || []).length} issues — ${first}`));
+    rows.appendChild(row);
+  });
+  g.appendChild(rows);
+  root.appendChild(g);
+}
+
+// ----- by genre (census + bulk set)
+function genreGroups() {
+  const groups = new Map();
+  (S.plan.albums || []).forEach(alb => {
+    const cur = alb.genre && alb.genre.current;
+    const vals = Array.isArray(cur) ? cur : (cur ? [cur] : ["(no genre)"]);
+    vals.forEach(v => {
+      if (!groups.has(v)) groups.set(v, []);
+      groups.get(v).push(alb);
+    });
+  });
+  return [...groups.entries()].sort((a, b) =>
+    a[1].length === b[1].length ? a[0].localeCompare(b[0]) : b[1].length - a[1].length);
+}
+function renderGenreView(root) {
+  const top = el("div", "chips");
+  top.appendChild(el("span", "chip", `${genreGroups().length} genre values`));
+  root.appendChild(top);
+  genreGroups().forEach(([genre, albums]) => {
+    const g = el("div", "group");
+    const gh = el("div", "ghead");
+    gh.appendChild(el("b", "", genre));
+    gh.appendChild(el("span", "cnt", `${albums.length} album(s)`));
+    if (genre !== "(no genre)") {
+      const apply = btn("Set all to this", "small", () => {
+        albums.forEach(alb => {
+          alb.genre.new = genre;      // deliberate overwrite, visible in diff
+        });
+        markDirty(); render();
+      });
+      apply.title = "Sets genre (new) for every album in this group — including mixed ones";
+      gh.appendChild(apply);
+    }
+    g.appendChild(gh);
+    const rows = el("div", "rows");
+    albums.forEach(alb => {
+      const row = el("div", "row");
+      row.onclick = () => navAlbum(alb.path);
+      row.appendChild(el("span", "nm", alb.path));
+      row.appendChild(el("span", "sub", `${(alb.tracks || []).length} tracks`));
+      rows.appendChild(row);
+    });
+    g.appendChild(rows);
+    root.appendChild(g);
+  });
+}
+
+// ----- by artist
+function artistGroups() {
+  const groups = new Map();
+  (S.plan.albums || []).forEach(alb => {
+    const cur = alb.artist && alb.artist.current;
+    const vals = Array.isArray(cur) ? cur : (cur ? [cur] : ["(unknown artist)"]);
+    vals.forEach(v => {
+      if (!groups.has(v)) groups.set(v, []);
+      groups.get(v).push(alb);
+    });
+  });
+  return [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+}
+function renderArtistView(root) {
+  artistGroups().forEach(([artist, albums]) => {
+    const g = el("div", "group");
+    const gh = el("div", "ghead");
+    gh.appendChild(el("b", "", artist));
+    gh.appendChild(el("span", "cnt", `${albums.length} album(s)`));
+    g.appendChild(gh);
+    const rows = el("div", "rows");
+    albums.forEach(alb => {
+      const row = el("div", "row");
+      row.onclick = () => navAlbum(alb.path);
+      row.appendChild(el("span", "nm", alb.album ? `${alb.album}` : alb.path));
+      row.appendChild(el("span", "sub",
+        `${(alb.tracks || []).length} tracks` +
+        ((alb.issues || []).length ? ` · ${(alb.issues || []).length} issues` : "")));
+      rows.appendChild(row);
+    });
+    g.appendChild(rows);
+    root.appendChild(g);
+  });
+}
+
+// ---------- album card
+function fieldRow(alb, name, num) {
+  const f = alb[name] || {};
+  const row = el("div", "fld");
+  row.appendChild(el("span", "lab", name));
+  const cur = el("span", "cur");
+  cur.textContent = Array.isArray(f.current) ? "mixed: " + f.current.map(fmt).join(" / ") : fmt(f.current);
+  row.appendChild(cur);
+  const inp = document.createElement(num ? "input" : "input");
+  inp.type = num ? "number" : "text";
+  inp.value = (f.new === null || f.new === undefined) ? "" : f.new;
+  inp.placeholder = Array.isArray(f.current) ? f.current.join(" / ") : fmt(f.current);
+  inp.onchange = () => {
+    commitField(alb, name, inp.value, num);
+    updateCounts();
+  };
+  row.appendChild(inp);
+  const reset = btn("×", "ghost small", () => {
+    alb[name] = { ...alb[name], new: null };
+    inp.value = "";
+    markDirty(); updateCounts();
+  });
+  if (f.new === null || f.new === undefined) reset.style.visibility = "hidden";
+  row.appendChild(reset);
+  return row;
+}
+function commitField(ob, name, raw, num) {
+  let v = num
+    ? (raw === "" ? null : (Number.isFinite(+raw) && +raw >= 0 ? Math.round(+raw) : NaN))
+    : (raw.trim() === "" ? null : raw.trim());
+  if (typeof v === "number" && Number.isNaN(v)) return; // invalid numeric: ignore
+  ob[name] = { ...ob[name], new: v };
+  markDirty();
+}
+
+function renderAlbumCard(root) {
+  const alb = byPath(S.album);
+  if (!alb) { navHome(); return; }
+
+  const head = el("div", "alhead");
+  head.appendChild(btn("← back", "back ghost", navHome));
+  head.appendChild(el("h2", "", alb.path));
+  head.appendChild(el("span", "cnt", `${(alb.tracks || []).length} tracks`));
+  head.appendChild(el("span", "hfill"));
+  head.appendChild(btn("Reset album edits", "small", () => {
+    ALBUM_FIELDS.forEach(k => alb[k] = { ...alb[k], new: null });
+    (alb.tracks || []).forEach(t =>
+      ["title", "track", "tracktotal"].forEach(k => t[k] = { ...t[k], new: null }));
+    alb.cover.action = null;
+    markDirty(); render();
+  }));
+  root.appendChild(head);
+
+  const card = el("div", "group");
+  ALBUM_FIELDS.forEach(k => card.appendChild(fieldRow(alb, k, k === "year")));
+  // album-wide tracktotal setter (the '# of tracks' consistency edit)
+  const tt = el("div", "fld");
+  tt.appendChild(el("span", "lab", "tracktotal → all"));
+  tt.appendChild(el("span", "cur", "set the same total on every track of this album"));
+  const ttInput = el("input", undefined, ""); ttInput.type = "number"; ttInput.min = "1";
+  tt.appendChild(ttInput);
+  tt.appendChild(btn("Set", "small", () => {
+    const v = ttInput.value.trim();
+    if (v === "" || !Number.isFinite(+v) || +v < 1) return;
+    (alb.tracks || []).forEach(t =>
+      t.tracktotal = { ...t.tracktotal, new: Math.round(+v) });
+    markDirty(); updateCounts(); render();
+  }));
+  card.appendChild(tt);
+  const cov = alb.cover || {};
+  const covLine = el("div", "cover");
+  const covBits = [];
+  if (cov.file) covBits.push(el("span", "set", cov.file));
+  (cov.other_images || []).forEach(o => covBits.push(el("span", "", "also: " + o)));
+  if (cov.embedded_in_count) covBits.push(el("span", "", `art embedded in ${cov.embedded_in_count} track(s)`));
+  if (!covBits.length) covBits.push(el("span", "", "no cover found"));
+  covBits.forEach((b, i) => { if (i) covLine.appendChild(el("span", "", " · ")); covLine.appendChild(b); });
+  card.appendChild(covLine);
+  (alb.issues || []).forEach(i => card.appendChild(el("div", "iss", "- " + i)));
+  root.appendChild(card);
+
+  const tc = el("div", "group");
+  const tbl = el("table");
+  const thead = el("thead"), tr = el("tr");
+  ["#", "file", "title", "track", "total", "target (apply)"].forEach(h => tr.appendChild(el("th", "", h)));
+  thead.appendChild(tr); tbl.appendChild(thead);
+  const tbody = el("tbody");
+  (alb.tracks || []).forEach(t => {
+    const row = el("tr");
+    const td1 = el("td"); td1.appendChild(el("span", "sub", fmt(curOf(t.track)))); row.appendChild(td1);
+    row.appendChild(el("td", "sub", t.file));
+    const mk = (name, num, cls) => {
+      const td = el("td", cls);
+      const f = t[name] || {};
+      const inp = el("input", undefined, "");
+      inp.type = num ? "number" : "text";
+      inp.value = (f.new === null || f.new === undefined) ? "" : f.new;
+      inp.placeholder = fmt(f.current);
+      inp.onchange = () => { commitField(t, name, inp.value, num); updateCounts(); };
+      td.appendChild(inp);
+      return td;
+    };
+    row.appendChild(mk("title"));
+    row.appendChild(mk("track", true, "num"));
+    row.appendChild(mk("tracktotal", true, "num"));
+    const tdt = el("td", "tgt");
+    tdt.textContent = (t.target_file || "recalculated at apply") +
+      (t.target_file && t.target_file !== t.file ? "  ⤳ rename" : "");
+    row.appendChild(tdt);
+    tbody.appendChild(row);
+  });
+  tbl.appendChild(tbody); tc.appendChild(tbl); root.appendChild(tc);
+}
+
+// ---------- boot
+(async function boot() {
+  try {
+    const r = await fetch("/plan");
+    if (!r.ok) throw new Error((await r.json()).error || r.status);
+    S.plan = await r.json();
+  } catch (e) {
+    document.body.innerHTML = `<main><h1>mlib plan editor</h1><p class="iss">failed to load plan: ${e}</p>
+      <p>Is the bridge running? Start with <code>mlib edit &lt;plan&gt;</code></p></main>`;
+    return;
+  }
+  $("savebtn").onclick = save;
+  window.addEventListener("keydown", ev => {
+    if ((ev.ctrlKey || ev.metaKey) && ev.key === "s") { ev.preventDefault(); save(); }
+  });
+  window.addEventListener("beforeunload", ev => {
+    if (S.dirty) { save(); ev.preventDefault(); ev.returnValue = ""; }
+  });
+  render();
+})();
+</script>
+</body>
+</html>

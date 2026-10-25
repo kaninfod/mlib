@@ -11,6 +11,7 @@ from pathlib import Path
 import typer
 
 from . import catalog as catalog_mod
+from . import edit as edit_mod
 from . import model, validate as validate_mod
 from .model import PLAN_NAME, PlanError
 
@@ -49,7 +50,8 @@ def catalog(ctx: typer.Context,
             root: Path = typer.Argument(..., exists=True, file_okay=False,
                                         help="Folder to scan (collection, staging, any music root)"),
             out: Path = typer.Option(None, "--out", help="Plan path (default <root>/mlib_plan.json)"),
-            force: bool = typer.Option(False, "--force", help="Overwrite an existing plan (previous saved as .bak)")):
+            force: bool = typer.Option(False, "--force", help="Overwrite an existing plan (previous saved as .bak)"),
+            open_ed: bool = typer.Option(False, "--open", help="Open the editor straight after cataloging (serves until Ctrl+C)")):
     """Scan a root and produce the edit plan (mlib_plan.json)."""
     plan_path = Path(out) if out else Path(root) / PLAN_NAME
     if plan_path.exists() and not force:
@@ -70,12 +72,27 @@ def catalog(ctx: typer.Context,
         f"Genres: {counts['genres']}   Issues: {counts['issues']}"
         + (f" ({cat_str})" if cat_str else " — none"),
         "",
-        f"Edit:    mlib edit {plan_path}   (editor arrives with mlib 0.2/P1 — "
-        f"the JSON is plain text and editable today)",
+        f"Edit:    mlib edit {plan_path}",
         f"Review:  mlib validate {plan_path}",
         f"Diff:    mlib diff {plan_path}",
     ]
     _emit(ctx, plan, "\n".join(human))
+    if open_ed:
+        edit_mod.run_until_interrupt(plan_path, port=0, open_browser=True)
+
+
+@app.command()
+def edit(ctx: typer.Context,
+         target: Path = typer.Argument(..., help="Plan file or scanned root (uses <root>/mlib_plan.json)"),
+         port: int = typer.Option(0, "--port", help="Bridge port (default: any free port)"),
+         no_open: bool = typer.Option(False, "--no-open", help="Do not launch a browser, just serve")):
+    """Edit a plan in your browser: localhost bridge + bundled static editor.
+
+    Works in Firefox, Chromium and Safari. Edits autosave (server keeps .bak);
+    Ctrl+C stops the bridge."""
+    plan_path = _resolve_plan(target)
+    model.load_plan(plan_path)  # fail fast on corrupt plans
+    edit_mod.run_until_interrupt(plan_path, port=port, open_browser=not no_open)
 
 
 @app.command()

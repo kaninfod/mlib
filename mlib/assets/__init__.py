@@ -1,0 +1,1 @@
+"""assets — package data (editor.html served by mlib.edit)."""
