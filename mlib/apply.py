@@ -59,6 +59,8 @@ class AlbumOps:
 
     @property
     def has_ops(self) -> bool:
+        if self.skipped:
+            return False        # guarded albums are never executed, atomic
         return bool(self.converts or self.renames or self.junk or self.tag_diffs
                     or self.folder_strategy not in (None, "in-place"))
 
@@ -198,15 +200,18 @@ def build_ops(alb: dict, root: Path) -> AlbumOps:
         return ops
     ops.final_names = names
 
-    # folder strategy (clean-in-place)
+    # folder strategy (clean-in-place; multi-disc merge when the album agrees)
     if ops.folder_strategy == "pending":
         disk_audio = [p for p in src.iterdir() if p.suffix.lower() in AUDIO_EXTS]
         nonmp3 = [p for p in disk_audio if p.suffix.lower() != ".mp3"]
         if ops.target_abs.exists():
-            ops.errors.append(f"target folder already exists: {ops.target_abs} "
-                              f"— resolve in the editor (e.g. adjust the album tag)")
-            ops.skipped = "folder target exists"
-            ops.folder_strategy = None
+            strategy, why = _existing_target_strategy(ops, artist, album_n, root)
+            if strategy is None:
+                ops.errors.append(why)
+                ops.skipped = "folder target exists"
+                ops.folder_strategy = None
+            else:
+                ops.folder_strategy = strategy
         elif nonmp3:
             ops.folder_strategy = "materialize"   # originals stay behind (D8)
         else:
@@ -282,6 +287,9 @@ def describe(ops: AlbumOps) -> list[str]:
     elif ops.folder_strategy == "materialize":
         lines.append(f"  · folder: materialize '{ops.target_rel}' — move mp3s + "
                      f"cover; originals stay in '{ops.album}'")
+    elif ops.folder_strategy == "merge-into":
+        lines.append(f"  · folder: MERGE into '{ops.target_rel}' — same album "
+                     f"as what's already there")
     for op in ops.cover_ops:
         lines.append(f"  · cover: {op}")
     if ops.junk:
@@ -289,6 +297,38 @@ def describe(ops: AlbumOps) -> list[str]:
     if not lines:
         lines.append("  · already conforms — nothing to do")
     return lines
+
+
+def _existing_target_strategy(ops: AlbumOps, artist, album_n, root: Path):
+    """Decide what to do when the target folder already exists:
+    'merge-into' when the files there carry the SAME artist+album tags
+    (the human's multi-disc intent), None + reason when it is a different
+    album (never auto-merge different music)."""
+    sample = next((p for p in sorted(ops.target_abs.iterdir())
+                   if p.suffix.lower() == ".mp3"), None)
+    if sample is None:
+        return "merge-into", ""      # empty (or junk-only) target: safe to fill
+    f = tags.id3_fields(sample)
+    same_artist = str(artist).casefold() == (f.get("artist") or "").casefold()
+    same_album = str(album_n).casefold() == (f.get("album") or "").casefold()
+    if not (same_artist and same_album):
+        return None, (f"target folder already exists with a DIFFERENT album "
+                      f"(tags say '{f.get('artist')} / {f.get('album')}') — adjust "
+                      f"the album tag in the editor or merge manually")
+    # track-number overlap check: the human must renumber overlapping discs
+    existing = set()
+    for p in ops.target_abs.iterdir():
+        if p.suffix.lower() == ".mp3":
+            existing.add(tags.id3_fields(p).get("track"))
+    incoming = {trk.get("track", {}).get("new") if trk["track"].get("new") is not None
+                else trk["track"].get("current") for trk in ops.tracks}
+    overlap = sorted(n for n in incoming
+                     if n is not None and n in existing)
+    if overlap:
+        return None, (f"track numbers {overlap} already exist in "
+                      f"'{ops.album}' target — renumber the incoming disc to "
+                      f"succeed (e.g. {max(existing or {0}) + 1}+), then re-apply")
+    return "merge-into", ""
 
 
 # ---------------------------------------------------------------- executor
@@ -420,7 +460,26 @@ def execute(ops: AlbumOps, alb: dict, root: Path,
             movers.append((cover, final_dir / CANONICAL_COVER))
         for m, d in movers:
             shutil.move(str(m), str(d))
-    if ops.folder_strategy in ("rename", "materialize"):
+    elif ops.folder_strategy == "merge-into":
+        final_dir = ops.target_abs
+        movers = []
+        for i in range(len(ops.tracks)):
+            mp3 = _final_mp3_for(ops, i)
+            if mp3.exists():
+                dst = final_dir / mp3.name
+                if dst.exists():
+                    raise RuntimeError(f"target exists: {dst}")
+                movers.append((mp3, dst))
+        cover = src / CANONICAL_COVER
+        if cover.exists() and not (final_dir / CANONICAL_COVER).exists():
+            movers.append((cover, final_dir / CANONICAL_COVER))
+        for m, d in movers:
+            shutil.move(str(m), str(d))
+        # the folder came from another disc: rename to the exact target name
+        # when the sanitized tags demand it (e.g. '?' folders)
+        if final_dir.name != ops.target_abs.name:
+            os.rename(final_dir, ops.target_abs)
+    if ops.folder_strategy in ("rename", "materialize", "merge-into"):
         rec["folder"] = ops.folder_strategy
         rec["folder_to"] = ops.target_rel
 
@@ -434,8 +493,15 @@ def execute(ops: AlbumOps, alb: dict, root: Path,
                     n_junk += 1
     if n_junk:
         rec["junk_removed"] = n_junk
-    if ops.folder_strategy == "materialize" and src.is_dir():
+    if ops.folder_strategy in ("materialize", "merge-into") and src.is_dir():
         rec["left_in_husk"] = sorted(p.name for p in src.iterdir())
+        # a husk that kept NOTHING (everything converted + moved) is just an
+        # empty shell — remove it; husks with originals stay (D4/W5)
+        try:
+            next(src.iterdir())
+        except StopIteration:
+            src.rmdir()
+            rec["husk_removed"] = True
 
     # 8) verify: files exist + tags landed
     problems = verify_album(ops, alb, final_dir)
@@ -509,8 +575,8 @@ def apply_album(alb: dict, root: Path, write: bool,
     except Exception as e:  # noqa: BLE001 — surfaced to the CLI, album stays safe
         ops.errors.append(f"apply failed: {e}")
         return ops, {"error": str(e), "album": alb["path"]}
-    final_dir = (ops.target_abs if ops.folder_strategy in ("rename", "materialize")
-                 else ops.src_dir)
+    final_dir = (ops.target_abs if ops.folder_strategy in
+                 ("rename", "materialize", "merge-into") else ops.src_dir)
     mp3s = sorted(p for p in final_dir.iterdir() if p.suffix.lower() == ".mp3")
     images = sorted(p for p in final_dir.iterdir() if p.suffix.lower() in IMAGE_EXTS)
     others = sorted(p for p in final_dir.iterdir()

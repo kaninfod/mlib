@@ -270,3 +270,74 @@ def test_missing_file_flagged(tmp_path):
     r = results[0]
     assert any("missing file" in e for e in r["errors"])
     assert (tmp_path / "A/B/01 One.mp3").exists()
+
+def test_multidisc_merge_into_existing(tmp_path):
+    """Same album name + continuing numbers = merge intent (the Oasis case).
+    Strict sanitize notes: the album TAG keeps its '?', the FOLDER target
+    gets '_' (design §4) — the disc-1 folder is created accordingly."""
+    # disc 1 already converged into the clean tree
+    d1 = tmp_path / "Oasis/(What's the Story) Morning Glory_"
+    d1.mkdir(parents=True)
+    _audio(d1 / "01 Hello.mp3", ".mp3", title="Hello", artist="Oasis",
+           album="(What's the Story) Morning Glory?", track="1")
+    # disc 2 sits in the inbox, tagged by the user: artist/album = same,
+    # tracks continue (12+)
+    inbox = "downloads/Oasis - 1995 - (What's The Story) Morning Glory/Disc 2"
+    _audio(tmp_path / inbox / "master - Talk Tonight.mp3", ".mp3",
+           title="Talk Tonight", artist="Oasis",
+           album="(What's the Story) Morning Glory?", track="2")
+
+    alb = _alb(inbox, "Oasis", "(What's the Story) Morning Glory?", None, None,
+               [_trk("master - Talk Tonight.mp3", "Talk Tonight", 2, 2)])
+    plan = _plan(tmp_path, [alb])
+    results, changed = A.run_apply(plan, tmp_path, write=True)
+    r = results[0]
+    assert r["result"] == "applied", r
+    assert "MERGE" in "\n".join(r["preview"]).upper()
+    assert (d1 / "02 Talk Tonight.mp3").exists()      # merged into disc 1's folder
+    assert (d1 / "cover.jpg").exists() is not None    # cover copied if source had one
+    # emptied source folder is removed; nothing left behind
+    assert not (tmp_path / inbox).exists()
+    f = tags.id3_fields(d1 / "02 Talk Tonight.mp3")
+    assert (f["title"], f["track"], f["tracktotal"]) == ("Talk Tonight", 2, 2)
+
+
+def test_merge_refuses_different_album(tmp_path):
+    """The existing folder's tags say it is a DIFFERENT album than the plan
+    claims — never auto-merge different music; the human resolves."""
+    d1 = tmp_path / "X/Y"
+    d1.mkdir(parents=True)
+    _audio(d1 / "01 Another Album Song.mp3", ".mp3", title="Another Album Song",
+           artist="A", album="B", track="1")
+    inbox = "downloads/X - Y/Disc 2"
+    _audio(tmp_path / inbox / "01 - Two.mp3", ".mp3", title="Two",
+           artist="X", album="Y", track="2")
+    alb = _alb(inbox, "X", "Y", None, None,
+               [_trk("01 - Two.mp3", "Two", 2, 2)])
+    plan = _plan(tmp_path, [alb])
+    results, _ = A.run_apply(plan, tmp_path, write=True)
+    r = results[0]
+    assert r["result"] == "nochange"
+    assert any("DIFFERENT album" in e for e in r["errors"])
+    assert (tmp_path / inbox / "01 - Two.mp3").exists()   # untouched
+    f = tags.id3_fields(d1 / "01 Another Album Song.mp3")
+    assert f["title"] == "Another Album Song"             # still the other album
+
+
+def test_merge_refuses_overlapping_numbers(tmp_path):
+    d1 = tmp_path / "X/Y"
+    d1.mkdir(parents=True)
+    _audio(d1 / "01 One.mp3", ".mp3", title="One", artist="X", album="Y",
+           track="1/2")
+    inbox = "downloads/X - Y/Disc 2"
+    _audio(tmp_path / inbox / "01 - One Again.mp3", ".mp3", title="One Again",
+           artist="X", album="Y", track="1")
+    alb = _alb(inbox, "X", "Y", None, None,
+               [_trk("01 - One Again.mp3", "One Again", 1, 2)])
+    plan = _plan(tmp_path, [alb])
+    results, _ = A.run_apply(plan, tmp_path, write=True)
+    r = results[0]
+    assert r["result"] == "nochange"
+    assert any("renumber" in e for e in r["errors"])
+    assert (d1 / "01 One.mp3").exists()                 # target untouched
+    assert (tmp_path / inbox / "01 - One Again.mp3").exists()
