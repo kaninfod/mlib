@@ -120,11 +120,16 @@ const curOf = f => (f && f.current !== null && f.current !== undefined) ? fmt(f.
 const ALBUM_FIELDS = ["artist", "albumartist", "album", "year", "genre"];
 const NUMERIC = new Set(["year", "track", "tracktotal"]);
 function countEdits(plan) {
-  let edits = 0, albums = 0, issues = 0;
+  let edits = 0, albums = 0, issues = 0, inferred = 0;
   for (const alb of plan.albums || []) {
     issues += (alb.issues || []).length;
     let has = false;
-    const bump = f => { if (f && f.new !== null && f.new !== undefined && f.new !== f.current) { edits++; has = true; } };
+    const bump = f => {
+      if (f && f.new !== null && f.new !== undefined && f.new !== f.current) {
+        edits++; has = true;
+        if (f.inferred) inferred++;
+      }
+    };
     ALBUM_FIELDS.forEach(k => bump(alb[k]));
     if (alb.cover && alb.cover.action) { edits++; has = true; }
     (alb.tracks || []).forEach(t => {
@@ -132,7 +137,7 @@ function countEdits(plan) {
     });
     if (has) albums++;
   }
-  return { edits, albums, issues };
+  return { edits, albums, issues, inferred };
 }
 function byPath(p) { return S.plan.albums.find(a => a.path === p); }
 
@@ -177,7 +182,9 @@ async function save() {
 function updateCounts() {
   const c = countEdits(S.plan);
   $("counts").textContent =
-    `${c.edits} edit(s) in ${c.albums} album(s) · ${c.issues} issue(s) · ${S.plan.albums.length} albums`;
+    `${c.edits} edit(s) in ${c.albums} album(s) · ${c.issues} issue(s)` +
+    (c.inferred ? ` · ✦ ${c.inferred} inferred` : "") +
+    ` · ${S.plan.albums.length} albums`;
   const meta = S.plan._meta || {};
   $("fmeta").textContent = `plan: ${meta.root || "?"} — v${meta.v || "?"}`;
 }
@@ -388,7 +395,12 @@ function renderArtistView(root) {
 function fieldRow(alb, name, num) {
   const f = alb[name] || {};
   const row = el("div", "fld");
-  row.appendChild(el("span", "lab", name));
+  const lab = el("span", "lab", name);
+  if (f.inferred && f.new !== null && f.new !== undefined) {
+    lab.appendChild(el("span", "star", " ✦"));
+    lab.title = "suggested from filename/folder — reject with ×, adjust by typing";
+  }
+  row.appendChild(lab);
   const cur = el("span", "cur");
   cur.textContent = Array.isArray(f.current) ? "mixed: " + f.current.map(fmt).join(" / ") : fmt(f.current);
   row.appendChild(cur);
@@ -396,14 +408,16 @@ function fieldRow(alb, name, num) {
   inp.type = num ? "number" : "text";
   inp.value = (f.new === null || f.new === undefined) ? "" : f.new;
   inp.placeholder = Array.isArray(f.current) ? f.current.join(" / ") : fmt(f.current);
+  if (f.inferred && f.new !== null && f.new !== undefined) inp.classList.add("inferred");
   inp.onchange = () => {
     commitField(alb, name, inp.value, num);
     updateCounts();
   };
   row.appendChild(inp);
   const reset = btn("×", "ghost small", () => {
-    alb[name] = { ...alb[name], new: null };
+    alb[name] = {"current": alb[name].current, "new": null};   // drops the suggestion entirely
     inp.value = "";
+    inp.classList.remove("inferred");
     markDirty(); updateCounts();
   });
   if (f.new === null || f.new === undefined) reset.style.visibility = "hidden";
@@ -415,7 +429,9 @@ function commitField(ob, name, raw, num) {
     ? (raw === "" ? null : (Number.isFinite(+raw) && +raw >= 0 ? Math.round(+raw) : NaN))
     : (raw.trim() === "" ? null : raw.trim());
   if (typeof v === "number" && Number.isNaN(v)) return; // invalid numeric: ignore
-  ob[name] = { ...ob[name], new: v };
+  const next = {...ob[name], new: v};
+  delete next.inferred;   // any human edit makes it a human decision
+  ob[name] = next;
   markDirty();
 }
 
@@ -482,6 +498,10 @@ function renderAlbumCard(root) {
       inp.type = num ? "number" : "text";
       inp.value = (f.new === null || f.new === undefined) ? "" : f.new;
       inp.placeholder = fmt(f.current);
+      if (f.inferred && f.new !== null && f.new !== undefined) {
+        inp.classList.add("inferred");
+        inp.title = "suggested from the filename — adjust by typing, remove via emptying";
+      }
       inp.onchange = () => { commitField(t, name, inp.value, num); updateCounts(); };
       td.appendChild(inp);
       return td;

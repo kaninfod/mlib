@@ -225,11 +225,12 @@ def diff(ctx: typer.Context,
         for entry in rows:
             lines.append(f"\n{entry['album']}")
             for ch in entry["changes"]:
+                mark = " (✦ inferred)" if ch.get("inferred") else ""
                 if ch.get("file"):
                     lines.append(f"  {ch['file']}")
-                    lines.append(f"    {ch['field']}: '{fmt(ch['current'])}' -> '{fmt(ch['new'])}'")
+                    lines.append(f"    {ch['field']}: '{fmt(ch['current'])}' -> '{fmt(ch['new'])}'{mark}")
                 else:
-                    lines.append(f"  {ch['field']}: '{fmt(ch['current'])}' -> '{fmt(ch['new'])}'")
+                    lines.append(f"  {ch['field']}: '{fmt(ch['current'])}' -> '{fmt(ch['new'])}'{mark}")
         return "\n".join(lines)
 
     _emit(ctx, {"edits": counts["edits"], "albums": albums_pending, "changes": rows},

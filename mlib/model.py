@@ -113,6 +113,7 @@ def plan_counts(plan: dict) -> dict:
     issues = 0
     edits = 0
     albums_with_edits = 0
+    inferred = 0
     for alb in albums:
         g = alb.get("genre", {}).get("current")
         if isinstance(g, list):
@@ -120,6 +121,15 @@ def plan_counts(plan: dict) -> dict:
         elif g:
             genres.add(g)
         issues += len(alb.get("issues", []))
+        for name in ALBUM_FIELDS:
+            f = alb.get(name, {})
+            if f.get("inferred") and f.get("new") is not None:
+                inferred += 1
+        for t in alb.get("tracks", []):
+            for name in TRACK_FIELDS:
+                f = t.get(name, {})
+                if f.get("inferred") and f.get("new") is not None:
+                    inferred += 1
         n = len(pending_changes(alb))
         if n:
             edits += n
@@ -131,12 +141,17 @@ def plan_counts(plan: dict) -> dict:
         "issues": issues,
         "edits": edits,
         "albums_with_edits": albums_with_edits,
+        "inferred": inferred,
     }
 
 
 def pending_field(field: dict, name: str) -> dict | None:
     if pending(field):
-        return {"field": name, "current": field.get("current"), "new": field.get("new")}
+        row = {"field": name, "current": field.get("current"),
+               "new": field.get("new")}
+        if field.get("inferred"):
+            row["inferred"] = True
+        return row
     return None
 
 
@@ -165,10 +180,15 @@ def pending_albums(plan: dict) -> list[str]:
 # ---------------------------------------------------------------- rescan merge
 
 def _merge_field(old: dict, fresh: dict) -> dict:
-    """Carry a decision from the previous plan into a fresh catalog entry."""
+    """Carry a decision from the previous plan into a fresh catalog entry
+    (including its inferred-suggestion marker)."""
     if old.get("new") is not None:
         merged = dict(fresh)
         merged["new"] = old["new"]
+        if old.get("inferred"):
+            merged["inferred"] = True
+        else:
+            merged.pop("inferred", None)   # a human decision outranks a guess
         return merged
     return fresh
 

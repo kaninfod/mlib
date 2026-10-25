@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from . import layout, model, tags
+from . import infer
 from .model import new_field, PLAN_NAME
 from .tags import AUDIO_EXTS, IMAGE_EXTS, CANONICAL_COVER, TrackInfo
 
@@ -179,6 +180,20 @@ def _assemble_album(reldir: str, files: list[Path], root: Path,
         "genre": _field_from(genre_vals),
     }
 
+    # ---- inference: fill holes from folder/file names (tags always win) ----
+    path_year, pattern_artist, pattern_album = infer.from_path_folder(
+        reldir.rsplit("/", 1)[-1])
+    depth_artist, depth_album = infer.from_path(reldir.split("/"))
+    artist_guess = pattern_artist or depth_artist
+    album_guess = pattern_album or depth_album
+    for name, guess in (("artist", artist_guess), ("album", album_guess),
+                        ("year", path_year)):
+        f = fields[name]
+        if guess is None or f.get("current") is not None:
+            continue          # nothing to infer, or the tag already knows
+        fields[name] = {"current": None, "new": int(guess)
+                        if name == "year" else guess, "inferred": True}
+
     issues: list[str] = []
     # M2: minimum tags on every file
     for label in ("artist", "album", "title", "year", "genre", "track", "tracktotal"):
@@ -203,17 +218,28 @@ def _assemble_album(reldir: str, files: list[Path], root: Path,
 
     tracks = []
     for fname, ti in infos:
+        # per-track suggestion fill: title/track from the filename when
+        # the corresponding tag is missing (tags always win)
+        if_track, if_title = infer.from_filename(Path(fname).stem)
+        title_field = new_field(ti.title)
+        if ti.title is None and if_title:
+            title_field = {"current": None, "new": if_title, "inferred": True}
+        track_field = new_field(ti.track)
+        if ti.track is None and if_track is not None:
+            track_field = {"current": None, "new": if_track, "inferred": True}
         tracks.append({
             "file": fname,
             "ext": ti.ext,
             "dur": round(ti.duration, 1) if ti.duration else None,
-            "title": new_field(ti.title),
-            "track": new_field(ti.track),
+            "title": title_field,
+            "track": track_field,
             "tracktotal": new_field(ti.tracktotal),
-            "target_file": layout.format_file_target(ti.track, ti.title),
+            "target_file": layout.format_file_target(
+                model.effective(track_field), model.effective(title_field)),
         })
-    tracks.sort(key=lambda t: (t["track"]["current"] if t["track"]["current"] is not None else 10_000,
-                               layout.natural_key(t["file"])))
+    tracks.sort(key=lambda t: (model.effective(t["track"])
+                if model.effective(t["track"]) is not None else 10_000,
+                layout.natural_key(t["file"])))
 
     return {
         "path": reldir,
