@@ -183,14 +183,29 @@ def apply(ctx: typer.Context,
 
 @app.command()
 def edit(ctx: typer.Context,
-         target: Path = typer.Argument(..., help="Plan file or scanned root (uses <root>/mlib_plan.json)"),
+         target: Path = typer.Argument(..., help="Plan file — or, in --host mode, the remote root whose local working copy you want"),
          port: int = typer.Option(0, "--port", help="Bridge port (default: any free port)"),
          no_open: bool = typer.Option(False, "--no-open", help="Do not launch a browser, just serve")):
     """Edit a plan in your browser: localhost bridge + bundled static editor.
 
     Works in Firefox, Chromium and Safari. Edits autosave (server keeps .bak);
-    Ctrl+C stops the bridge."""
-    plan_path = _resolve_plan(target)
+    Ctrl+C stops the bridge. With --host, a remote root maps to its local
+    working copy (~/.mlib/plans/…) — plan-file operations are always local."""
+    h = (ctx.obj or {}).get("host")
+    plan_path: Path | None = None
+    if h:
+        # --host mode: map the remote root/file onto its local working copy
+        cand = remote_mod.working_copy_for(f"{target}/{PLAN_NAME}")
+        alt = remote_mod.working_copy_for(Path(target))
+        plan_path = next((c for c in (cand, alt) if c.exists()), None)
+        if plan_path is None:
+            raise typer.BadParameter(
+                f"no local working copy for {target} — run "
+                f"'mlib --host {h} catalog {target}' first "
+                f"(it would create {cand})")
+        typer.echo(f"editing local working copy: {plan_path}")
+    else:
+        plan_path = _resolve_plan(target)
     model.load_plan(plan_path)  # fail fast on corrupt plans
     edit_mod.run_until_interrupt(plan_path, port=port, open_browser=not no_open)
 
@@ -267,10 +282,11 @@ def run() -> None:
         typer.echo(msg, err=True)
         if owner:
             typer.echo(
-                f"\n'{m.group(1)}' belongs to the {owner} command(s), so it "
-                f"must come after the command name — global flags (--host, "
-                f"--json, -v) are the ones allowed before it:", err=True)
-            typer.echo(f"    mlib [--host store] <command> … {m.group(1)}",
+                f"\n'{m.group(1)}' belongs to the {owner} command — the shape is "
+                f"'mlib [global flags] {owner} … {m.group(1)}' "
+                f"(global flags (--host, --json, -v) are the ones allowed "
+                f"before the command):", err=True)
+            typer.echo(f"    mlib [--host store] {owner} … {m.group(1)}",
                        err=True)
             typer.echo("Try 'mlib <command> --help' for that command's flags.",
                        err=True)
