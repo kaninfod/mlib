@@ -69,9 +69,14 @@ def pull_plan(host: str, remote_plan: str) -> Path:
 
 
 def push_plan(host: str, local_plan: Path) -> str:
-    remote_tmp = "~/mlib_src/.plan_push.json"
+    remote_tmp = "/tmp/mlib_plan_push.json"
     _run(["rsync", "-a", str(local_plan), _rsync_path(host, remote_tmp)])
     return remote_tmp
+
+
+def fetch_back(host: str, remote_path: str, local_path: Path) -> Path:
+    _run(["rsync", "-a", _rsync_path(host, remote_path), str(local_path)])
+    return Path(local_path)
 
 
 def _last_json(out: str) -> dict:
@@ -106,7 +111,11 @@ def remote_apply(host: str, local_plan: Path, write: bool,
             + ("" + "".join(f", '--album', {a!r}" for a in sorted(only or [])))
             + (", '--keep-going'" if keep_going else "")
             + f", '--bitrate', {bitrate!r}]\nmain()\n")
-    return ssh_out(host, code, timeout=1800)
+    out = ssh_out(host, code, timeout=1800)
+    # post-apply truth: the remote runner also refreshed the plan next to the
+    # data; sync it back over the LOCAL working copy
+    fetch_back(host, remote_plan, local_plan)
+    return out
 
 
 def remote_shelf(host: str, local_plan: Path, into: str, dry_run: bool,

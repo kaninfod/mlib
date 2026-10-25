@@ -6,6 +6,7 @@ convert / shelf / rescan / doctor / --host (P3).
 from __future__ import annotations
 
 import json as _json
+import os
 import re
 from collections import Counter
 from pathlib import Path
@@ -21,6 +22,9 @@ from . import shelf as shelf_mod
 from . import validate as validate_mod
 from .model import PLAN_NAME, PlanError
 
+PLAN_ARG_HELP = ("Plan file, a bare plan name in ~/.mlib/plans/ "
+                 "(e.g. 'import_staging'), or a local root folder")
+
 app = typer.Typer(add_completion=False,
                   help="mlib — file, tag and cover your music collection to one standard.")
 
@@ -33,23 +37,44 @@ def _emit(ctx: typer.Context, machine, human: str) -> None:
         typer.echo(human)
 
 
-def _resolve_plan(target: Path) -> Path:
-    """Accept a plan file or a root directory (uses <root>/mlib_plan.json)."""
-    target = Path(target)
-    if target.is_dir():
-        target = target / PLAN_NAME
-    if not target.exists():
-        raise typer.BadParameter(
-            f"{target} not found — run 'mlib catalog <root>' first")
-    return target
+def _resolve_plan(target) -> Path:
+    """Resolve a PLAN argument (design: plan-ish commands always speak PLAN):
+
+    1. an existing path  — a plan JSON file, or a local ROOT folder (uses
+       <root>/mlib_plan.json)
+    2. a bare name       — 'import_staging' -> ~/.mlib/plans/import_staging.json
+       (or its .plan variant / the mlib_plan.json working copy), including
+       remote-root names in --host mode (catalog names the copy after the root)
+    Never a remote path: with --host, folder paths belong to commands that
+    touch files (catalog/apply/shelf/convert); plans live in the plans dir.
+    """
+    t = Path(target)
+    candidates: list[Path] = []
+    if t.exists():
+        return t / PLAN_NAME if t.is_dir() else t
+    pdir = remote_mod.plans_dir()
+    stem = t.name[:-5] if t.name.endswith(".json") else t.name
+    candidates += [
+        pdir / (t.name if t.name.endswith(".json") else f"{t.name}.json"),
+        pdir / f"{stem}.json",
+        remote_mod.working_copy_for(f"{target}/{PLAN_NAME}"),
+        remote_mod.working_copy_for(t),
+    ]
+    for c in candidates:
+        if c.exists():
+            return c
+    raise typer.BadParameter(
+        f"plan not found: {target} — give a plan file path, a root folder, or a "
+        f"bare name present in {pdir}")
 
 
 @app.callback()
 def main(ctx: typer.Context,
          json_out: bool = typer.Option(False, "--json", help="Machine-readable output"),
          verbose: bool = typer.Option(False, "--verbose", "-v", help="More detail where applicable"),
-         host: str = typer.Option(None, "--host", help="Run against files on a remote machine over ssh (the plan travels to/from a local working copy)")):
-    ctx.obj = {"json_out": json_out, "verbose": verbose, "host": host}
+         host: str = typer.Option(None, "--host", help="Run against files on a remote machine over ssh (the plan travels to/from a local working copy). Default: env MLIB_HOST")):
+    ctx.obj = {"json_out": json_out, "verbose": verbose,
+               "host": host or os.environ.get("MLIB_HOST") or None}
 
 
 @app.command()
@@ -132,7 +157,7 @@ def catalog(ctx: typer.Context,
 
 @app.command()
 def apply(ctx: typer.Context,
-          target: Path = typer.Argument(..., help="Plan file or scanned root (uses <root>/mlib_plan.json)"),
+          plan: Path = typer.Argument(..., help=PLAN_ARG_HELP),
           write: bool = typer.Option(False, "--write", help="Execute the changes (default: preview only)"),
           album: list[str] = typer.Option(None, "--album", help="Restrict to album path(s) — repeatable"),
           keep_going: bool = typer.Option(False, "--keep-going", help="Continue on album errors instead of stopping"),
@@ -141,11 +166,16 @@ def apply(ctx: typer.Context,
     """Converge files toward the plan: convert, tag, cover, rename, clean.
 
     Preview by default — pass --write to actually change files.
-    The plan is updated to the post-apply state (applied albums are refreshed
-    in place); run `mlib catalog <root> --force` afterwards for a full refresh
-    (pending edits survive the merge). Works with --host (plan travels up,
-    results travel back)."""
-    plan_path = _resolve_plan(target)
+
+    PLAN is your edited JSON (a path, a bare name in ~/.mlib/plans, or a
+    local root). The folder of files comes from the PLAN itself (_meta.root,
+    set at catalog time) — with --host, that is where the work runs.
+
+    The plan is updated to the post-apply state; run
+    `mlib catalog <root> --force` afterwards for a full refresh (pending
+    edits survive the merge)."""
+    plan_path = _resolve_plan(plan)
+    plan_path = _resolve_plan(plan)
     plan = model.load_plan(plan_path)
     h = host or (ctx.obj or {}).get("host")
     only = set(album) if album else None
@@ -183,7 +213,7 @@ def apply(ctx: typer.Context,
 
 @app.command()
 def edit(ctx: typer.Context,
-         target: Path = typer.Argument(..., help="Plan file — or, in --host mode, the remote root whose local working copy you want"),
+         plan: Path = typer.Argument(..., help=PLAN_ARG_HELP + " (in --host mode a remote root maps to its local working copy)"),
          port: int = typer.Option(0, "--port", help="Bridge port (default: any free port)"),
          no_open: bool = typer.Option(False, "--no-open", help="Do not launch a browser, just serve"),
          host: str = typer.Option(None, "--host", help="Resolve paths against this machine's plans (plan-file ops are always local; same as the global --host)")):
@@ -197,27 +227,27 @@ def edit(ctx: typer.Context,
     plan_path: Path | None = None
     if h:
         # --host mode: map the remote root/file onto its local working copy
-        cand = remote_mod.working_copy_for(f"{target}/{PLAN_NAME}")
-        alt = remote_mod.working_copy_for(Path(target))
+        cand = remote_mod.working_copy_for(f"{plan}/{PLAN_NAME}")
+        alt = remote_mod.working_copy_for(Path(plan))
         plan_path = next((c for c in (cand, alt) if c.exists()), None)
         if plan_path is None:
             raise typer.BadParameter(
-                f"no local working copy for {target} — run "
-                f"'mlib --host {h} catalog {target}' first "
+                f"no local working copy for {plan} — run "
+                f"'mlib --host {h} catalog {plan}' first "
                 f"(it would create {cand})")
         typer.echo(f"editing local working copy: {plan_path}")
     else:
-        plan_path = _resolve_plan(target)
+        plan_path = _resolve_plan(plan)
     model.load_plan(plan_path)  # fail fast on corrupt plans
     edit_mod.run_until_interrupt(plan_path, port=port, open_browser=not no_open)
 
 
 @app.command()
 def validate(ctx: typer.Context,
-             target: Path = typer.Argument(..., help="Plan file or scanned root"),
+             plan: Path = typer.Argument(..., help=PLAN_ARG_HELP),
              all_albums: bool = typer.Option(False, "--all", help="List clean albums too")):
     """Compliance report: what breaks the standard, per album."""
-    plan = model.load_plan(_resolve_plan(target))
+    plan = model.load_plan(_resolve_plan(plan))
     report = validate_mod.validate_report(plan, show_clean=all_albums)
     report = {k: v for k, v in report.items() if v is not None}
     _emit(ctx, report, validate_mod.render_report(report))
@@ -225,10 +255,10 @@ def validate(ctx: typer.Context,
 
 @app.command()
 def diff(ctx: typer.Context,
-         target: Path = typer.Argument(..., help="Plan file or scanned root"),
+         plan: Path = typer.Argument(..., help=PLAN_ARG_HELP),
          verbose: bool = typer.Option(False, "--verbose", "-v", help="Per-track edit lines")):
     """Show pending edits (new != current) before applying."""
-    plan = model.load_plan(_resolve_plan(target))
+    plan = model.load_plan(_resolve_plan(plan))
     rows = []
     albums_pending: list[str] = []
     for alb in plan.get("albums", []):
@@ -335,14 +365,14 @@ def convert(ctx: typer.Context,
 
 @app.command()
 def shelf(ctx: typer.Context,
-          target: Path = typer.Argument(..., help="Staging plan (or staging root)"),
+          plan: Path = typer.Argument(..., help=PLAN_ARG_HELP),
           into: Path = typer.Option(..., "--into", help="Collection root to move converged albums INTO (with --host: remote path)"),
           dry_run: bool = typer.Option(False, "--dry-run", help="Show what would happen"),
           album: list[str] = typer.Option(None, "--album", help="Restrict to album path(s) — repeatable"),
           rescan: bool = typer.Option(False, "--rescan", help="Trigger gonic rescan after moving (env GONIC_URL/USER/PASS)"),
           bitrate: str = typer.Option("320k", "--bitrate", help="mp3 bitrate for conversions during the apply stage (default 320k CBR)")):
     """Apply pending work, then move the plan's album folders into a collection root."""
-    plan_path = _resolve_plan(target)
+    plan_path = _resolve_plan(plan)
     plan = model.load_plan(plan_path)
     h = host or (ctx.obj or {}).get("host")
     only = set(album) if album else None

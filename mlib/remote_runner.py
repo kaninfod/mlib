@@ -25,6 +25,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 def main() -> None:
     ap = argparse.ArgumentParser(prog="mlib-remote", add_help=True)
+    # remote HOME expansion happens HERE, on the remote machine
+    ap.add_argument("--_noop", help=argparse.SUPPRESS)
+
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     p = sub.add_parser("catalog")
@@ -52,6 +55,10 @@ def main() -> None:
     p.add_argument("--dry-run", action="store_true")
 
     args = ap.parse_args()
+    # tilde paths arrive unexpanded — Path() never expands them, so do it here
+    for attr in ("root", "plan", "into"):
+        if hasattr(args, attr) and getattr(args, attr):
+            setattr(args, attr, str(Path(getattr(args, attr)).expanduser()))
     from mlib import model  # noqa: F401 (package context)
 
     if args.cmd == "catalog":
@@ -78,7 +85,9 @@ def main() -> None:
         if args.write and changed:
             from mlib.model import save_plan
             save_plan(Path(args.plan), plan, backup=True)
-            print("remote plan saved")
+            # keep the plan next to the data in sync too
+            save_plan(root / "mlib_plan.json", plan, backup=True)
+            print("remote plan saved (pushed copy + next to the data)")
         print(json.dumps({"plan": args.plan, "changed": changed}))
         return
 
