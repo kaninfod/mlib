@@ -185,13 +185,15 @@ def apply(ctx: typer.Context,
 def edit(ctx: typer.Context,
          target: Path = typer.Argument(..., help="Plan file — or, in --host mode, the remote root whose local working copy you want"),
          port: int = typer.Option(0, "--port", help="Bridge port (default: any free port)"),
-         no_open: bool = typer.Option(False, "--no-open", help="Do not launch a browser, just serve")):
+         no_open: bool = typer.Option(False, "--no-open", help="Do not launch a browser, just serve"),
+         host: str = typer.Option(None, "--host", help="Resolve paths against this machine's plans (plan-file ops are always local; same as the global --host)")):
     """Edit a plan in your browser: localhost bridge + bundled static editor.
 
     Works in Firefox, Chromium and Safari. Edits autosave (server keeps .bak);
     Ctrl+C stops the bridge. With --host, a remote root maps to its local
-    working copy (~/.mlib/plans/…) — plan-file operations are always local."""
-    h = (ctx.obj or {}).get("host")
+    working copy (~/.mlib/plans/…) — plan-file operations are always local
+    (no file work happens remotely here)."""
+    h = host or (ctx.obj or {}).get("host")
     plan_path: Path | None = None
     if h:
         # --host mode: map the remote root/file onto its local working copy
