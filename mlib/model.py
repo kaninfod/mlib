@@ -59,10 +59,26 @@ def new_plan(root: Path) -> dict:
             "v": PLAN_VERSION,
             "root": str(root),
             "created": None,  # filled by catalog (iso timestamp)
+            "dismissed": [],  # rejected inference suggestions: {"uid","f","t"}
         },
         "albums": [],
         "_summary": {},
     }
+
+
+def dismissed_key(uid: str, field: str, track_file: str | None) -> dict:
+    return {"uid": uid, "f": field, "t": track_file}
+
+
+def is_dismissed(dismissed: list, uid: str, field: str,
+                 track_file: str | None = None) -> bool:
+    """True when the human rejected this suggestion in an earlier cycle.
+    Album-level entries (t: null) cover every file; track entries are exact."""
+    for d in dismissed or []:
+        if d.get("uid") == uid and d.get("f") == field:
+            if d.get("t") is None or d.get("t") == track_file:
+                return True
+    return False
 
 
 def load_plan(path: Path) -> dict:

@@ -488,7 +488,9 @@ def verify_album(ops: AlbumOps, alb: dict, final_dir: Path) -> list[str]:
 # ---------------------------------------------------------------- orchestration
 
 def apply_album(alb: dict, root: Path, write: bool,
-                bitrate: str = convert.BITRATE_DEFAULT) -> tuple[AlbumOps, dict | None]:
+                bitrate: str = convert.BITRATE_DEFAULT,
+                dismissed: list[dict] | None = None
+                ) -> tuple[AlbumOps, dict | None]:
     """Build + (optionally) execute ops for one album.
 
     Returns (ops, record) where record is:
@@ -516,7 +518,8 @@ def apply_album(alb: dict, root: Path, write: bool,
                     and not is_junk(p.name))
     fresh = catalog_mod._assemble_album(final_dir.relative_to(root).as_posix(), mp3s, root,
                                         image_names=[p.name for p in images],
-                                        other_names=[p.name for p in others])
+                                        other_names=[p.name for p in others],
+                                        dismissed=dismissed)
     fresh["_uid"] = alb.get("_uid", "")
     applied = list(alb.get("_applied", []))
     applied.append(rec)
@@ -536,10 +539,12 @@ def run_apply(plan: dict, root: Path, write: bool = False,
     results: list[dict] = []
     changed = False
     albums = plan.get("albums", [])
+    dismissed = plan.get("_meta", {}).get("dismissed", [])
     for idx, alb in enumerate(albums):
         if only and alb.get("path") not in only:
             continue
-        ops, outcome = apply_album(alb, root, write=write, bitrate=bitrate)
+        ops, outcome = apply_album(alb, root, write=write, bitrate=bitrate,
+                                   dismissed=dismissed)
         entry: dict = {"album": alb["path"], "preview": describe(ops),
                        "skipped": ops.skipped, "errors": list(ops.errors)}
         if outcome is None:

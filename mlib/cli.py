@@ -93,16 +93,21 @@ def catalog(ctx: typer.Context,
     if plan_path.exists() and not force:
         raise typer.BadParameter(f"{plan_path} exists — pass --force to regenerate "
                                  f"(previous version is kept as .bak)")
+    old_plan = None
+    if plan_path.exists():
+        try:
+            old_plan = model.load_plan(plan_path)
+        except PlanError:
+            pass
     try:
-        fresh = catalog_mod.build_plan(Path(root))
+        fresh = catalog_mod.build_plan(Path(root), previous=old_plan)
     except FileNotFoundError as e:
         raise typer.BadParameter(str(e))
     if force and plan_path.exists():
         try:
-            old = model.load_plan(plan_path)
-            fresh = model.merge_rescan(old, fresh)   # pending edits survive
+            fresh = model.merge_rescan(old_plan, fresh)   # pending edits survive
             fresh["_meta"]["merged"] = True
-        except PlanError:
+        except (PlanError, TypeError):
             pass
     model.save_plan(plan_path, fresh, backup=plan_path.exists())
     plan = fresh

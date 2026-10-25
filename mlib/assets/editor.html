@@ -416,6 +416,7 @@ function fieldRow(alb, name, num) {
   row.appendChild(inp);
   const reset = btn("×", "ghost small", () => {
     alb[name] = {"current": alb[name].current, "new": null};   // drops the suggestion entirely
+    addDismissal(alb, name, null);   // and remembers the rejection across catalogs
     inp.value = "";
     inp.classList.remove("inferred");
     markDirty(); updateCounts();
@@ -423,6 +424,12 @@ function fieldRow(alb, name, num) {
   if (f.new === null || f.new === undefined) reset.style.visibility = "hidden";
   row.appendChild(reset);
   return row;
+}
+function addDismissal(alb, field, trackFile) {
+  try {
+    if (!S.plan._meta.dismissed) S.plan._meta.dismissed = [];
+    S.plan._meta.dismissed.push({"uid": alb._uid || "", "f": field, "t": trackFile});
+  } catch (err) { /* plan meta absent: nothing to remember */ }
 }
 function commitField(ob, name, raw, num) {
   let v = num
@@ -502,7 +509,11 @@ function renderAlbumCard(root) {
         inp.classList.add("inferred");
         inp.title = "suggested from the filename — adjust by typing, remove via emptying";
       }
-      inp.onchange = () => { commitField(t, name, inp.value, num); updateCounts(); };
+      inp.onchange = () => {
+        if (inp.value.trim() === "" && f.inferred) addDismissal(alb, name, t.file);
+        commitField(t, name, inp.value, num);
+        updateCounts();
+      };
       td.appendChild(inp);
       return td;
     };

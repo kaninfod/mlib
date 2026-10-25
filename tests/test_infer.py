@@ -119,3 +119,33 @@ def test_merge_keeps_marker_but_human_decisions_outrank():
     human = {"current": None, "new": "My Album"}
     out = _merge_field(human, guessed)   # human previous decision beats guess
     assert out["new"] == "My Album" and "inferred" not in out
+
+def test_dismissed_suggestion_never_returns(tmp_path):
+    from mlib.catalog import _assemble_album, build_plan
+    from mlib import model
+    from mlib.tags import TrackInfo
+
+    info = TrackInfo(ext=".mp3")          # no tags at all
+    name = "01 - She's Fresh.mp3"
+    infos_by_name = {name: info}
+    files = [tmp_path / "Adele/19" / name]
+    files[0].parent.mkdir(parents=True, exist_ok=True)
+    files[0].touch()                      # build_plan walks the real filesystem
+    # plan with a recorded dismissal from a previous cycle (uid = the same path)
+    plan = model.new_plan(tmp_path)
+    plan["_meta"]["dismissed"] = [{"uid": model.album_uid("Adele/19"),
+                                   "f": "track", "t": name}]
+    with patch_read(infos_by_name, tmp_path):
+        alb = _assemble_album("Adele/19", files, tmp_path, [], [],
+                              dismissed=plan["_meta"]["dismissed"])
+    trk = alb["tracks"][0]
+    assert trk["track"]["new"] is None and not trk["track"].get("inferred")
+    # ...while title (not dismissed) is still suggested
+    assert trk["title"]["new"] == "She's Fresh" and trk["title"]["inferred"]
+
+    # and through the full build_plan(previous=...) path
+    with patch_read(infos_by_name, tmp_path):
+        plan2 = build_plan(tmp_path, previous=plan)
+    trk2 = plan2["albums"][0]["tracks"][0]
+    assert trk2["track"]["new"] is None
+    assert trk2["title"]["new"] == "She's Fresh"

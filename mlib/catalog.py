@@ -160,7 +160,9 @@ def _format_issues(infos: list[tuple[str, TrackInfo]]) -> list[str]:
 
 
 def _assemble_album(reldir: str, files: list[Path], root: Path,
-                    image_names: list[str], other_names: list[str]) -> dict:
+                    image_names: list[str], other_names: list[str],
+                    dismissed: list[dict] | None = None) -> dict:
+    dismissed = dismissed or []
     infos: list[tuple[str, TrackInfo]] = []
     for p in files:
         ti = tags.read_audio(p)
@@ -181,6 +183,7 @@ def _assemble_album(reldir: str, files: list[Path], root: Path,
     }
 
     # ---- inference: fill holes from folder/file names (tags always win) ----
+    uid = model.album_uid(reldir)
     path_year, pattern_artist, pattern_album = infer.from_path_folder(
         reldir.rsplit("/", 1)[-1])
     depth_artist, depth_album = infer.from_path(reldir.split("/"))
@@ -191,6 +194,8 @@ def _assemble_album(reldir: str, files: list[Path], root: Path,
         f = fields[name]
         if guess is None or f.get("current") is not None:
             continue          # nothing to infer, or the tag already knows
+        if model.is_dismissed(dismissed, uid, name, None):
+            continue          # the human rejected this suggestion before
         fields[name] = {"current": None, "new": int(guess)
                         if name == "year" else guess, "inferred": True}
 
@@ -222,10 +227,12 @@ def _assemble_album(reldir: str, files: list[Path], root: Path,
         # the corresponding tag is missing (tags always win)
         if_track, if_title = infer.from_filename(Path(fname).stem)
         title_field = new_field(ti.title)
-        if ti.title is None and if_title:
+        if ti.title is None and if_title and not model.is_dismissed(
+                dismissed, uid, "title", fname):
             title_field = {"current": None, "new": if_title, "inferred": True}
         track_field = new_field(ti.track)
-        if ti.track is None and if_track is not None:
+        if ti.track is None and if_track is not None and not model.is_dismissed(
+                dismissed, uid, "track", fname):
             track_field = {"current": None, "new": if_track, "inferred": True}
         tracks.append({
             "file": fname,
@@ -252,7 +259,7 @@ def _assemble_album(reldir: str, files: list[Path], root: Path,
     }
 
 
-def build_plan(root: Path) -> dict:
+def build_plan(root: Path, previous: dict | None = None) -> dict:
     root = Path(root).resolve()
     if not root.is_dir():
         raise FileNotFoundError(f"not a directory: {root}")
@@ -262,6 +269,7 @@ def build_plan(root: Path) -> dict:
     plan["_meta"]["created"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
 
     dirs = sorted(set(audio) | set(images) | set(others), key=layout.natural_key)
+    dismissed = (previous or {}).get("_meta", {}).get("dismissed", [])
     for reldir in dirs:
         if not audio.get(reldir):
             continue  # image-only / junk-only folders carry no plan entries
@@ -269,6 +277,7 @@ def build_plan(root: Path) -> dict:
             reldir, audio[reldir], root,
             image_names=[p.name for p in images.get(reldir, [])],
             other_names=[p.name for p in others.get(reldir, [])],
+            dismissed=dismissed,
         )
         plan["albums"].append(album)
 
