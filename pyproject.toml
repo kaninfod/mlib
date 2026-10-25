@@ -19,7 +19,7 @@ dependencies = [
 test = ["pytest>=8"]
 
 [project.scripts]
-mlib = "mlib.cli:app"
+mlib = "mlib.cli:run"
 
 [tool.setuptools]
 packages = ["mlib", "mlib.assets"]

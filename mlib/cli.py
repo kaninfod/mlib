@@ -6,6 +6,7 @@ convert / shelf / rescan / doctor / --host (P3).
 from __future__ import annotations
 
 import json as _json
+import re
 from collections import Counter
 from pathlib import Path
 
@@ -235,11 +236,40 @@ def diff(ctx: typer.Context,
           render() if rows else "No pending edits — the plan matches disk.")
 
 
+# which subcommand owns which flag — used to teach the flag-tier rule on misuse
+_FLAG_OWNERS = {
+    "--remove-originals": "convert", "--bitrate": "apply/shelf/convert",
+    "--write": "apply", "--album": "apply / shelf", "--keep-going": "apply",
+    "--into": "shelf", "--dry-run": "shelf / convert", "--rescan": "shelf",
+    "--force": "catalog", "--out": "catalog", "--open": "catalog",
+    "--port": "edit", "--no-open": "edit", "--all": "validate",
+    "--url": "rescan", "--user": "rescan", "--pass": "rescan",
+}
+
+
 def run() -> None:
     try:
-        app()
+        # non-standalone mode so we can turn usage errors into teaching moments
+        app(standalone_mode=False)
     except PlanError as e:
         typer.echo(f"error: {e}", err=True)
+        raise SystemExit(2)
+    except Exception as e:  # noqa: BLE001 — click usage errors included here
+        msg = getattr(e, "message", None) or str(e)
+        m = re.search(r"No such option: (--[a-zA-Z-]+)", msg)
+        owner = _FLAG_OWNERS.get(m.group(1)) if m else None
+        typer.echo(msg, err=True)
+        if owner:
+            typer.echo(
+                f"\n'{m.group(1)}' belongs to the {owner} command(s), so it "
+                f"must come after the command name — global flags (--host, "
+                f"--json, -v) are the ones allowed before it:", err=True)
+            typer.echo(f"    mlib [--host store] <command> … {m.group(1)}",
+                       err=True)
+            typer.echo("Try 'mlib <command> --help' for that command's flags.",
+                       err=True)
+        else:
+            typer.echo("Try 'mlib --help' for help.", err=True)
         raise SystemExit(2)
 
 
@@ -380,14 +410,6 @@ def subprocess_check() -> str:
         return (r.stdout.splitlines() or ["present"])[0][:60]
     except Exception:  # noqa: BLE001
         return "present"
-
-
-def run() -> None:
-    try:
-        app()
-    except PlanError as e:
-        typer.echo(f"error: {e}", err=True)
-        raise SystemExit(2)
 
 
 if __name__ == "__main__":
