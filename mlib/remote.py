@@ -104,6 +104,7 @@ def remote_catalog(host: str, root: str, out: str | None) -> tuple[str, dict]:
 def remote_apply(host: str, local_plan: Path, write: bool,
                  only: set[str] | None, keep_going: bool,
                  bitrate: str) -> str:
+    sync_source(host)
     remote_plan = push_plan(host, local_plan)
     code = ("from mlib.remote_runner import main\nimport sys\n"
             f"sys.argv = ['mlib-remote', 'apply', {remote_plan!r}"
@@ -127,11 +128,13 @@ def remote_shelf(host: str, local_plan: Path, into: str, dry_run: bool,
             + (", '--dry-run'" if dry_run else "")
             + (", '--rescan'" if rescan else "")
             + f", '--bitrate', {bitrate!r}]\nmain()\n")
+    sync_source(host)
     return ssh_out(host, code, timeout=3600)
 
 
 def remote_convert(host: str, root: str, bitrate: str,
                    remove_originals: bool, dry_run: bool = False) -> str:
+    sync_source(host)
     code = ("from mlib.remote_runner import main\nimport sys\n"
             f"sys.argv = ['mlib-remote', 'convert', {root!r}, "
             f"'--bitrate', {bitrate!r}"

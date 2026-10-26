@@ -85,7 +85,13 @@ def catalog(ctx: typer.Context,
             out: Path = typer.Option(None, "--out", help="Plan path (default <root>/mlib_plan.json)"),
             force: bool = typer.Option(False, "--force", help="Overwrite an existing plan (previous saved as .bak); pending edits are carried over via merge"),
             open_ed: bool = typer.Option(False, "--open", help="Open the editor straight after cataloging (serves until Ctrl+C)")):
-    """Scan a root and produce the edit plan (mlib_plan.json)."""
+    """Scan a root and produce the edit plan (mlib_plan.json).
+
+    Examples:
+      mlib --host store catalog /mnt/store/music/import_staging --force
+      mlib catalog ~/new_music                   (local folder: no --host)
+    The plan lands next to the data + a local working copy in ~/.mlib/plans;
+    --force regenerates (pending edits survive the merge)."""
     h = host or (ctx.obj or {}).get("host")
     if h:
         remote_mod.sync_source(h)          # keep ~/mlib_src fresh (fast, idempotent)
@@ -173,17 +179,25 @@ def apply(ctx: typer.Context,
 
     The plan is updated to the post-apply state; run
     `mlib catalog <root> --force` afterwards for a full refresh (pending
-    edits survive the merge)."""
-    plan_path = _resolve_plan(plan)
+    edits survive the merge).
+
+    Examples:
+      mlib apply import_staging --write --host store        (MLIB_HOST works too)
+      mlib apply import_staging                             (preview only)
+      mlib apply import_staging --write --album "Adele/19"
+    """
     plan_path = _resolve_plan(plan)
     plan = model.load_plan(plan_path)
     h = host or (ctx.obj or {}).get("host")
     only = set(album) if album else None
 
     if h:
-        out_text = remote_mod.remote_apply(h, plan_path, write=write,
-                                           only=only, keep_going=keep_going,
-                                           bitrate=bitrate)
+        try:
+            out_text = remote_mod.remote_apply(h, plan_path, write=write,
+                                               only=only, keep_going=keep_going,
+                                               bitrate=bitrate)
+        except RuntimeError as e:
+            raise typer.BadParameter(f"remote apply failed: {e}")
         # bring the updated remote plan back over the local one
         plan = model.load_plan(plan_path)
         remote_root = plan.get("_meta", {}).get("root")
@@ -222,7 +236,12 @@ def edit(ctx: typer.Context,
     Works in Firefox, Chromium and Safari. Edits autosave (server keeps .bak);
     Ctrl+C stops the bridge. With --host, a remote root maps to its local
     working copy (~/.mlib/plans/…) — plan-file operations are always local
-    (no file work happens remotely here)."""
+    (no file work happens remotely here).
+
+    Examples:
+      mlib edit import_staging                 (bare plan name)
+      mlib --host store edit /mnt/store/music/import_staging
+      mlib edit ~/.mlib/plans/import_staging.json --no-open"""
     h = host or (ctx.obj or {}).get("host")
     plan_path: Path | None = None
     if h:
@@ -341,11 +360,20 @@ def convert(ctx: typer.Context,
 
     flac/opus/ogg/webm → mp3 320 CBR in the same folder, tags carried, cover.jpg
     materialized when a folder has none but its sources carry art. Run the
-    catalog loop afterwards to validate/fix tags."""
+    catalog loop afterwards to validate/fix tags.
+
+    Examples:
+      mlib --host store convert /mnt/store/music/import_staging --dry-run
+      mlib --host store convert "<album folder>" --remove-originals
+      mlib convert ~/ripped_flac                    (local: no --host)"""
     h = host or (ctx.obj or {}).get("host")
     if h:
-        out_text = remote_mod.remote_convert(h, str(root), bitrate,
-                                             remove_originals, dry_run=dry_run)
+        try:
+            out_text = remote_mod.remote_convert(h, str(root), bitrate,
+                                                 remove_originals,
+                                                 dry_run=dry_run)
+        except RuntimeError as e:
+            raise typer.BadParameter(f"remote convert failed: {e}")
         _emit(ctx, {"host_out": out_text}, out_text.strip() + f"\n\n(on {h})")
         return
     if not Path(root).is_dir():
@@ -366,25 +394,38 @@ def convert(ctx: typer.Context,
 @app.command()
 def shelf(ctx: typer.Context,
           plan: Path = typer.Argument(..., help=PLAN_ARG_HELP),
-          into: Path = typer.Option(..., "--into", help="Collection root to move converged albums INTO (with --host: remote path)"),
+          into: Path = typer.Option(..., "--into", help="Collection root to move converged albums INTO (with --host: remote path; default env MLIB_HOST too)"),
           dry_run: bool = typer.Option(False, "--dry-run", help="Show what would happen"),
           album: list[str] = typer.Option(None, "--album", help="Restrict to album path(s) — repeatable"),
           rescan: bool = typer.Option(False, "--rescan", help="Trigger gonic rescan after moving (env GONIC_URL/USER/PASS)"),
-          bitrate: str = typer.Option("320k", "--bitrate", help="mp3 bitrate for conversions during the apply stage (default 320k CBR)")):
-    """Apply pending work, then move the plan's album folders into a collection root."""
+          bitrate: str = typer.Option("320k", "--bitrate", help="mp3 bitrate for conversions during the apply stage (default 320k CBR)"),
+          host: str = typer.Option(None, "--host", help="Run against files on this machine over ssh (same as the global --host; may be given either way)")):
+    """Apply pending work, then move the plan's album folders into a collection root.
+
+    Examples:
+      mlib --host store shelf import_staging --dry-run --into /mnt/store/music/collection
+      mlib --host store shelf import_staging --into /mnt/store/music/collection --rescan
+    (PLAN by bare name resolves in ~/.mlib/plans; --host is the machine the
+    albums currently live on — the same tier rules as everywhere else.)"""
     plan_path = _resolve_plan(plan)
     plan = model.load_plan(plan_path)
     h = host or (ctx.obj or {}).get("host")
     only = set(album) if album else None
     if h:
-        out_text = remote_mod.remote_shelf(h, plan_path, str(into),
-                                           dry_run=dry_run, rescan=rescan,
-                                           bitrate=bitrate)
+        try:
+            out_text = remote_mod.remote_shelf(h, plan_path, str(into),
+                                               dry_run=dry_run, rescan=rescan,
+                                               bitrate=bitrate)
+        except RuntimeError as e:
+            raise typer.BadParameter(f"remote shelf failed: {e}")
         _emit(ctx, {"host_out": out_text}, out_text.strip())
         return
     from_root = Path(plan.get("_meta", {}).get("root") or plan_path.parent)
-    out = shelf_mod.shelf(plan, from_root, Path(into), dry_run=dry_run,
-                          only=only, rescan=rescan, bitrate=bitrate)
+    try:
+        out = shelf_mod.shelf(plan, from_root, Path(into), dry_run=dry_run,
+                              only=only, rescan=rescan, bitrate=bitrate)
+    except RuntimeError as e:
+        raise typer.BadParameter(f"shelf failed: {e}")
     _emit(ctx, out, shelf_mod.render_shelf(out))
 
 

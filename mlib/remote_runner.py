@@ -23,7 +23,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
-def main() -> None:
+def _dispatch_impl():
     ap = argparse.ArgumentParser(prog="mlib-remote", add_help=True)
     # remote HOME expansion happens HERE, on the remote machine
     ap.add_argument("--_noop", help=argparse.SUPPRESS)
@@ -115,6 +115,17 @@ def main() -> None:
         print(f"remote convert {label}: {n} file(s)")
         print(json.dumps({"converted": n}))
         return
+
+
+def main() -> None:
+    """Thin wrapper: remote failures should read like tool errors, not tracebacks."""
+    import sys as _sys
+    try:
+        _dispatch_impl()
+    except Exception as e:  # noqa: BLE001 — surfaced to the Mac as plain text
+        print(f"remote error: {e}", file=_sys.stderr)
+        print(json.dumps({"error": str(e)}))
+        _sys.exit(2)
 
 
 if __name__ == "__main__":
