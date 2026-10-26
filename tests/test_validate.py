@@ -42,7 +42,7 @@ def test_render_human_and_json(tmp_path):
     plan_file.write_text(json.dumps(_plan()))
     res = runner.invoke(app, ["--json", "validate", str(plan_file)])
     assert res.exit_code == 0, res.output
-    out = json.loads(res.output)
+    out = json.loads(res.stdout)
     assert out["albums_flagged"] == 1
 
 

@@ -174,7 +174,7 @@ def test_remote_runner_dispatch(monkeypatch, tmp_path):
     def fake_catalog(root, out=None):
         called["catalog"] = (root, out)
 
-    monkeypatch.setattr("mlib.catalog.build_plan", lambda r: {"_summary": {"a": 1}})
+    monkeypatch.setattr("mlib.catalog.build_plan", lambda r, previous=None: {"_summary": {"a": 1}})
     monkeypatch.setattr("mlib.model.save_plan", lambda *a, **k: None)
     monkeypatch.setattr(_sys, "argv",
                         ["mlib-remote", "catalog", str(tmp_path)])

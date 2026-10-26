@@ -90,11 +90,19 @@ def _last_json(out: str) -> dict:
 
 # ------------------------------------------------------------ --host commands
 
-def remote_catalog(host: str, root: str, out: str | None) -> tuple[str, dict]:
+def remote_catalog(host: str, root: str, out: str | None,
+                   previous: Path | None = None,
+                   overwrite: bool = False) -> tuple[str, dict]:
+    if previous is not None:
+        prev_path = push_plan(host, previous)
+    else:
+        prev_path = "/tmp/mlib_no_previous.json"
     code = ("from mlib.remote_runner import main\n"
             f"import sys\n"
             f"sys.argv = ['mlib-remote', 'catalog', {root!r}"
-            + (f", '--out', {out!r}" if out else "") + "]\n"
+            + (f", '--out', {out!r}" if out else "")
+            + (f", '--previous', {prev_path!r}" if previous is not None else "")
+            + (", '--overwrite'" if overwrite else "") + "]\n"
             "main()\n")
     out_text = ssh_out(host, code)
     info = _last_json(out_text)

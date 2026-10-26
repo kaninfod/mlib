@@ -33,6 +33,8 @@ def _dispatch_impl():
     p = sub.add_parser("catalog")
     p.add_argument("root")
     p.add_argument("--out", default=None)
+    p.add_argument("--previous", default=None)
+    p.add_argument("--overwrite", action="store_true")
 
     p = sub.add_parser("apply")
     p.add_argument("plan")
@@ -63,14 +65,28 @@ def _dispatch_impl():
 
     if args.cmd == "catalog":
         from mlib import catalog
-        from mlib.model import save_plan, PLAN_NAME
+        from mlib.model import load_plan, save_plan, merge_rescan, PLAN_NAME
         root = Path(args.root)
         out = Path(args.out) if args.out else root / PLAN_NAME
-        plan = catalog.build_plan(root)
+        previous = None
+        if args.previous and Path(args.previous).exists():
+            # the pushed working copy: carries dismissed-suggestions memory
+            try:
+                previous = load_plan(Path(args.previous))
+            except Exception:  # noqa: BLE001
+                previous = None
+        elif (root / PLAN_NAME).exists() and not args.overwrite:
+            try:
+                previous = load_plan(root / PLAN_NAME)
+            except Exception:  # noqa: BLE001
+                previous = None
+        plan = catalog.build_plan(root, previous=previous)
+        if not args.overwrite and previous is not None:
+            plan = merge_rescan(previous, plan)   # pending edits survive
+            plan["_meta"]["merged"] = True
         save_plan(out, plan, backup=True)
-        print(f"remote catalog: {out}")
-        print(json.dumps({"plan": str(out),
-                          "summary": plan.get("_summary", {})}))
+        print(f"remote catalog (update+merge): {out}")
+        print(json.dumps({"plan": str(out), "summary": plan.get("_summary", {})}))
         return
 
     if args.cmd == "apply":
